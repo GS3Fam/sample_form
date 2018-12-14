@@ -1,0 +1,58 @@
+.container-fluid{
+    height: 100vh;
+}
+.explorer_title{
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 10px;
+    border-bottom-style: solid;
+    border-bottom-color: rgb(216, 216, 216);
+    border-bottom-width: 1px;
+    width: 232px;
+    font-weight: bold;
+}
+.explorer{
+    /* width: 400px; */
+    background-color: #ecf0f1;
+    overflow-y: scroll;
+}
+
+#sidebar {
+    position: fixed;
+    width: 250px;
+    background: rgb(236, 236, 236);
+    height: 100vh;
+    overflow: auto;
+    top: 0;
+}
+#form_content {
+    margin-left: 260px;
+    width: 64vw;
+}
+
+.file_button{
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 10px;
+    word-wrap: break-word;
+    width: 232px;
+    border-bottom-style: solid;
+    border-bottom-color: rgb(216, 216, 216);
+    border-bottom-width: 1px;
+    /* opacity: 0.6; */
+    transition: 0.12s;
+}
+
+.file_button:hover{
+    cursor: pointer;
+    background-color: darksalmon;
+}
+
+#app_name{
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+#inputs{
+    margin-bottom: 10px;
+}

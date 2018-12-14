@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Sample Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="../public/styles/main.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div id="sidebar">
+                <div class="explorer_title">EXPLORER</div>
+                <div class="btn-group-vertical" id="buttons">
+                </div>
+            </div>
+            <div id="form_content">
+                <h3 id="app_name"></h3>
+                <form id = "forms">
+                    <!-- <div id = "inputs" style="display: grid; grid-gap: 10px;"> -->
+                    <div id = "inputs">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.$ = window.JQuery = require('jquery');
+
+        const electron = require('electron');
+        const {ipcRenderer} = electron;
+        var final_array = [];
+        var column_name = [];
+        var app_id = '';
+        ipcRenderer.on('upload-json', (event, arg, data) => {
+            // console.log(data);
+            $("#inputs").empty();
+            $("#app_name").html('');
+            $("#app_name").html(arg._app.caption);
+            app_id = arg._app.appId;
+            var container;
+            final_array = [];
+            column_name = [];
+            arg.columns.forEach(element => {
+                var type;
+                var input;
+                column_name = [];
+                column_name.push(element[0], element[1]);
+                final_array.push(column_name);
+                var type2;
+                if(element[2] == "Editable"){
+                    type = '';
+                }else if(element[2] == "Computed"){
+                    type = 'disabled';
+                }
+                if(element[1] == "Text"){
+                    input = $('<input type="text" class="form-control" name="'+element[0]+'" placeholder="Enter '+element[0]+'" '+type+'></div>')
+                }
+                else if(element[1] == "Time"){
+                    input = $('<input type="time" class="form-control" name="'+element[0]+'" placeholder="Enter '+element[0]+'" '+type+'></div>')
+                }
+                else if(element[1] == "Number"){
+                    input = ('<input type="number" class="form-control" name="'+element[0]+'" placeholder="Enter '+element[0]+'" '+type+'>')
+                }
+                else if(element[1] == "Date"){
+                    input = ('<input type="date" class="form-control" name="'+element[0]+'" placeholder="Enter '+element[0]+'" '+type+'>')
+                }
+                else if(element[1] == "Text Area"){
+                    input = ('<textarea class="form-control" name="'+element[0]+'" rows="3" '+type+'></textarea>')
+                }
+                else if(element[1].match(/selection-option-.*/)){
+                    var ret = element[1].replace('selection-option-', '');
+                    var result = ret.split(";");
+                    
+                    input = '<select id="inputState" name="'+element[0]+'" class="form-control"><option selected>Choose...</option>'
+                        result.forEach(value => {
+                            input+= '<option value="'+value+'">' + value + '</option>'
+                        });
+                        input += '</select>'
+                }
+                else if(element[1].match(/checkbox-option-.*/)){
+                    var ret = element[1].replace('checkbox-option-', '');
+                    var result = ret.split(";");
+                    
+                    input = '';
+                    result.forEach(value => {
+                        input+= '<div class="form-check"><input type="checkbox" class="'+element[0]+'" name="'+element[0]+'" value="'+value+'" class="form-check-input" /><label class="form-check-label">'+value+'</label></div>'
+                    });
+                }
+                else if(element[1].match(/typeahead-option-.*/)){
+                    input = $('<input type="text" class="form-control" name="'+element[0]+'" placeholder="Enter '+element[0]+'" '+type+'></div>')
+                }
+                
+                // console.log('grid-column : ' + element[4].column);
+                
+                var label = $('<label></label>').text(element[0]);
+                var form_group = $('<div class="form-group col"></div>').append(label, input);
+                if(element[4]=''){
+                    $('#inputs').append(form_group);
+                }else{
+                    var form_row = $('<div class="form-row"></div>').append(form_group);
+                    var form_grid = $('<div style="grid-column: '+element[4].column+'; grid-row: '+element[4].row+'"></div>').append(form_row);
+                    $('#inputs').append(form_grid);
+                }
+                
+                // if(element[1] == "Text"){
+                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><input type="text" class="form-control" placeholder="Enter '+element[0]+'" '+type+'></div>')
+                // }
+                // else if(element[1] == "Number"){
+                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><input type="number" class="form-control" placeholder="Enter '+element[0]+'" '+type+'></div>')
+                // }
+                // else if(element[1] == "Date"){
+                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><input type="date" class="form-control" placeholder="Enter '+element[0]+'" '+type+'></div>')
+                // }
+                // else if(element[1] == "Text Area"){
+                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><textarea class="form-control" rows="3" '+type+'>Enter '+element[0]+'</textarea>')
+                // }
+                // else if(element[1].match(/selection-option-.*/)){
+                //     var ret = element[1].replace('selection-option-', '');
+                //     var result = ret.split(",");
+
+                //     var input = '<div class="form-group"><label>'+element[0]+'</label> <select id="inputState" class="form-control"><option selected>Choose...</option>'
+                //         result.forEach(element => {
+                //             input+= '<option>' + element + '</option>'
+                //         });
+                //         input += '</select>'
+                //     $('#forms').append(input)
+                // }
+                // console.log('Input Name : ' + element[0] + ' - ' + ' Input Type : ' + element[1] + ' Type : ' + element[2])
+            });
+            $('#inputs').append('<button type="button" class="btn btn-primary" id="submit_data">Submit</button>');
+            // console.log(column_name);
+            // console.log(arg.columns) // prints "pong"
+        });
+        // get json
+        $(document).ready(function() {
+            $('.file_button').click(function() {
+                var file_name = $(this).attr('value');
+                var app_id_send = $(this).attr('data-id');
+                // console.log(file_name);
+                ipcRenderer.send('upload-json', file_name, app_id_send);
+
+            });
+        });
+        // get list of files
+        ipcRenderer.on('list_files', function(event, item){
+            item.forEach(element => {
+                $("#buttons").append('<span class="file_button" value="'+element.path+'" data-id="'+element.app_id+'">'+element.app_name+'</span>');
+            });
+            // console.log(item);
+        });
+        // get list of data
+        // ipcRenderer.on('list-data', function(event, item){
+        //     console.log(item);
+        //     // console.log(item);
+        // });
+
+        ipcRenderer.send('list_files', 'ping2');
+        // ipcRenderer.send('upload-json', 'ping1');
+
+        $(document).ready(function () {
+            $(document).on('click','#submit_data',function(e) {
+                //console.log('clicked');
+                var value = '';
+                var obj = {
+                    "Customer" : "Customer A",
+                    "Transaction" : app_id,
+                    "data" : {
+
+                    }
+                }
+                // console.log(final_array);
+                final_array.forEach(element => {
+                    if(element[1].match(/typeahead-option-.*/) || element[1] == "Text" || element[1] == "Time" || element[1] == "Number" || element[1] == "Date" || element[1] == "Text Area"){
+                        value = $('input[name="'+element[0]+'"]').val();
+                        obj.data[element[0]] = value;
+                    }
+                    else if(element[1].match(/selection-option-.*/)){
+                        value = $('select[name="'+element[0]+'"]').val();
+                        obj.data[element[0]] = value;
+                    }
+                    else if(element[1].match(/checkbox-option-.*/)){
+                        var sList = [];
+                        $('input[name="'+element[0]+'"]:checked').each(function() {
+                            sList.push(this.value);
+                        });
+                        obj.data[element[0]] = sList;
+                    }
+                    // 
+                    // 
+                    // console.log(element[0]);
+                }); 
+
+                ipcRenderer.send('send_data', obj);
+                // console.log(column_name);
+                // console.log();
+            });
+        });
+    </script>
+</body>
+</html>
