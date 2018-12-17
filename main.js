@@ -192,18 +192,30 @@ ipcMain.on('send-data', (event, arg) => {
             console.log('save');
         });
 
-        var file_name = makeid();
-        fs.writeFile('data/'+file_name+'.json', JSON.stringify(arg), function (err){
+        // var file_name = makeid();
+        // fs.writeFile('data/'+file_name+'.json', JSON.stringify(arg), function (err){
+        //     if (err) throw err;
+        //     console.log('saved locally');
+        // });
+        fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
             if (err) throw err;
+
             console.log('saved locally');
-        });
+        })
 
         event.sender.send('saved-indicator', true);
     }
     else{
         // console.log(JSON.stringify(arg));
-        var file_name = makeid();
-        fs.writeFile('data/'+file_name+'.json', JSON.stringify(arg), function (err){
+
+        // write every json
+        // var file_name = makeid();
+        // fs.writeFile('data/'+file_name+'.json', JSON.stringify(arg), function (err){
+        //     if (err) throw err;
+
+        //     console.log('saved locally');
+        // })
+        fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
             if (err) throw err;
 
             console.log('saved locally');
