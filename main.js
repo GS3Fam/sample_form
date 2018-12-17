@@ -179,17 +179,28 @@ ipcMain.on('send-data', (event, arg) => {
         return text;
     }
 
-    var data = mongoose.model('Data', dataSchema);
+    if(connection){
+        var data = mongoose.model('Data', dataSchema);
 
-    var inputs = new data({
-        form_id: makeid(), Customer: arg.Customer, Transaction: arg.Transaction, data: arg.data
-    });
+        var inputs = new data({
+            form_id: makeid(), Customer: arg.Customer, Transaction: arg.Transaction, data: arg.data
+        });
 
-    inputs.save(function (err, inputs){
-        if(err) return console.error(err);
-        mongoose.deleteModel('Data');  
-        console.log('save');
-    });
+        inputs.save(function (err, inputs){
+            if(err) return console.error(err);
+            mongoose.deleteModel('Data');  
+            console.log('save');
+        });
+    }
+    else{
+        // console.log(JSON.stringify(arg));
+        var file_name = makeid();
+        fs.writeFile('data/'+file_name+'.json', JSON.stringify(arg), function (err){
+            if (err) throw err;
+
+            console.log('saved locally');
+        })
+    }
 });
 
 // =============== offline ========================== //
