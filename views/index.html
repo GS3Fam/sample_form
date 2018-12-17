@@ -6,6 +6,8 @@
     <title>Sample Form</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
+
     <link rel="stylesheet" href="../public/styles/main.css">
 </head>
 <body>
@@ -21,6 +23,22 @@
                 <form id = "forms">
                     <!-- <div id = "inputs" style="display: grid; grid-gap: 10px;"> -->
                     <div id = "inputs">
+                        <table id = "whole-table">
+                            <thead>
+                                <th>Actions</th>
+                                <th>Name</th>
+                                <th>Name</th>
+                                <th>Name</th>
+                            </thead>
+                            <tbody>
+                                <tr class="table-row">
+                                    <td><span class="action-btn far fa-eye"></span> <span class="action-btn fas fa-edit"></span> <span class="action-btn far fa-trash-alt"></span></td>
+                                    <td>Jairo</td>
+                                    <td>Jairo</td>
+                                    <td>Jairo</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </form>
             </div>
@@ -29,14 +47,27 @@
 
     <script>
         window.$ = window.JQuery = require('jquery');
-
         const electron = require('electron');
         const {ipcRenderer} = electron;
         var final_array = [];
         var column_name = [];
         var app_id = '';
+        $('#buttons').empty();
+
         ipcRenderer.on('upload-json', (event, arg, data) => {
-            // console.log(data);
+            // console.log(data[0]._doc);
+            // var content = '';
+            // content += '<table>';
+            // content += '<tr>';
+            // content += '<td>';
+            // content += 'jairo';
+            // content += '</td>';
+            // content += '</tr>';
+            // content += '</table>';
+
+
+            // $('#inputs').append(content);
+
             $("#inputs").empty();
             $("#app_name").html('');
             $("#app_name").html(arg._app.caption);
@@ -74,7 +105,7 @@
                 else if(element[1].match(/selection-option-.*/)){
                     var ret = element[1].replace('selection-option-', '');
                     var result = ret.split(";");
-                    
+
                     input = '<select id="inputState" name="'+element[0]+'" class="form-control"><option selected>Choose...</option>'
                         result.forEach(value => {
                             input+= '<option value="'+value+'">' + value + '</option>'
@@ -84,7 +115,7 @@
                 else if(element[1].match(/checkbox-option-.*/)){
                     var ret = element[1].replace('checkbox-option-', '');
                     var result = ret.split(";");
-                    
+
                     input = '';
                     result.forEach(value => {
                         input+= '<div class="form-check"><input type="checkbox" class="'+element[0]+'" name="'+element[0]+'" value="'+value+'" class="form-check-input" /><label class="form-check-label">'+value+'</label></div>'
@@ -93,9 +124,9 @@
                 else if(element[1].match(/typeahead-option-.*/)){
                     input = $('<input type="text" class="form-control" name="'+element[0]+'" placeholder="Enter '+element[0]+'" '+type+'></div>')
                 }
-                
+
                 // console.log('grid-column : ' + element[4].column);
-                
+
                 var label = $('<label></label>').text(element[0]);
                 var form_group = $('<div class="form-group col"></div>').append(label, input);
                 if(element[4]=''){
@@ -105,51 +136,27 @@
                     var form_grid = $('<div style="grid-column: '+element[4].column+'; grid-row: '+element[4].row+'"></div>').append(form_row);
                     $('#inputs').append(form_grid);
                 }
-                
-                // if(element[1] == "Text"){
-                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><input type="text" class="form-control" placeholder="Enter '+element[0]+'" '+type+'></div>')
-                // }
-                // else if(element[1] == "Number"){
-                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><input type="number" class="form-control" placeholder="Enter '+element[0]+'" '+type+'></div>')
-                // }
-                // else if(element[1] == "Date"){
-                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><input type="date" class="form-control" placeholder="Enter '+element[0]+'" '+type+'></div>')
-                // }
-                // else if(element[1] == "Text Area"){
-                //     $('#forms').append('<div class="form-group"><label>'+element[0]+'</label><textarea class="form-control" rows="3" '+type+'>Enter '+element[0]+'</textarea>')
-                // }
-                // else if(element[1].match(/selection-option-.*/)){
-                //     var ret = element[1].replace('selection-option-', '');
-                //     var result = ret.split(",");
-
-                //     var input = '<div class="form-group"><label>'+element[0]+'</label> <select id="inputState" class="form-control"><option selected>Choose...</option>'
-                //         result.forEach(element => {
-                //             input+= '<option>' + element + '</option>'
-                //         });
-                //         input += '</select>'
-                //     $('#forms').append(input)
-                // }
-                // console.log('Input Name : ' + element[0] + ' - ' + ' Input Type : ' + element[1] + ' Type : ' + element[2])
             });
             $('#inputs').append('<button type="button" class="btn btn-primary" id="submit_data">Submit</button>');
             // console.log(column_name);
             // console.log(arg.columns) // prints "pong"
         });
+
         // get json
-        $(document).ready(function() {
-            $('.file_button').click(function() {
+        ipcRenderer.on('list_files', function(event, item){
+            $('#buttons').empty();
+            item.forEach(element => {
+                $("#buttons").append('<span class="file_button" value="'+element.path_send+'" data-id="'+element.app_id+'">'+element.app_name+'</span>');
+            });
+
+            // get list of files for online
+            $('.file_button').on('click',function() {
+                $("#inputs").empty();
                 var file_name = $(this).attr('value');
                 var app_id_send = $(this).attr('data-id');
                 // console.log(file_name);
                 ipcRenderer.send('upload-json', file_name, app_id_send);
-
-            });
-        });
-        // get list of files
-        ipcRenderer.on('list_files', function(event, item){
-            item.forEach(element => {
-                $("#buttons").append('<span class="file_button" value="'+element.path+'" data-id="'+element.app_id+'">'+element.app_name+'</span>');
-            });
+            })
             // console.log(item);
         });
         // get list of data
@@ -157,11 +164,24 @@
         //     console.log(item);
         //     // console.log(item);
         // });
+        var con;
+        function checkInternet() {
+            require('dns').lookup('google.com',function(err) {
+                con = err && err.code == "ENOTFOUND" ? false : true
+            })
+        }
+        setInterval(function(){
+            checkInternet();
+            // console.log(con);
+            ipcRenderer.send('list_files', 'ping2', con);
+        }, 3000);
 
-        ipcRenderer.send('list_files', 'ping2');
+        
         // ipcRenderer.send('upload-json', 'ping1');
 
         $(document).ready(function () {
+            // get list of files for offline
+
             $(document).on('click','#submit_data',function(e) {
                 //console.log('clicked');
                 var value = '';
@@ -189,12 +209,12 @@
                         });
                         obj.data[element[0]] = sList;
                     }
-                    // 
-                    // 
+                    //
+                    //
                     // console.log(element[0]);
-                }); 
+                });
 
-                ipcRenderer.send('send_data', obj);
+                ipcRenderer.send('send-data', obj);
                 // console.log(column_name);
                 // console.log();
             });

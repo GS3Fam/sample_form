@@ -6,14 +6,10 @@ const file = './form_data/';
 const mongoose = require('mongoose');
 
 var db = mongoose.connection;
-
-mongoose.connect('mongodb://jairo_form:mngvPS5PqDNw4PW@ds139198.mlab.com:39198/db_test2');
-
-db.once('open', function() {
-   console.log('connected');
-});
-
-var json_files = [];
+var connection;
+var db_online = 'mongodb://jairo_form:mngvPS5PqDNw4PW@ds139198.mlab.com:39198/db_test2';
+mongoose.connect(db_online);
+db.on('error', console.error.bind(console, 'connection error:'));
 
 const{app, BrowserWindow, Menu, ipcMain} = electron;
 
@@ -41,33 +37,18 @@ app.on('ready', function(){
     //Insert menu
     Menu.setApplicationMenu(mainMenu);
 });
-setInterval(function () {
-},1000);
 
-// offline
-fs.readdir(path.join(__dirname, 'form_data'), (err, dir) => {
-    //const config_name = require(file + arg);
-    // console.log(config_name.columns);
-    for (var i = 0, path; path = dir[i]; i++) {
-        var file_type = path.substr(path.length - 5);
-        if(file_type === '.json'){
-            const config_name = require(file + path);
-            const app_name = config_name._app.caption;
-            const app_id = config_name._app.appId;
-            const array = { path, app_name, app_id }
-            json_files.push(array);
-        }
-    }
-    // console.log(json_files);
-    // console.log(json_files);
-    console.log(json_files);
-    ipcMain.on('list_files', (event, arg) => {
-        // console.log(arg) // prints "ping"
-        event.sender.send('list_files', json_files)
-    });
-    // mainWindow.webContents.send('list_files', json_files);
+// ======================================= SCHEMA ================================================= //
+var dataSchema = new mongoose.Schema({
+    form_id: String,
+    Customer: String,
+    Transaction: String,
+    data: Array 
 });
-
+// ====================================== ERROR HANDLING ============================ //
+function handleError(error){
+    console.log(error);
+}
 //======================================= ONLINE =================================== //
 var formSchema = new mongoose.Schema({
     appId : String,
@@ -86,52 +67,107 @@ var formSchema = new mongoose.Schema({
     columns : []
 });
 
+// =========================================== LIST OF FORM ============================================ //
 var form_list = mongoose.model('Form_data', formSchema);
+var json_files = [];
+ipcMain.on('list_files', (event, arg, con) => {
+    // check if the connection is the same
+    // if(con == connection){
+    //     console.log('same');
+    // }
+    // else{
+    //     connection = con;
+    // }
+    connection = con;
+    json_files = [];
+    if(con == true){
+        mongoose.connect(db_online);
+        db.on('error', console.error.bind(console, 'connection error:'));
 
-// var inputs_form = new form_list({   
-//     appId: '10', _app : _app_array, columns: column_data
-// });
-
-// inputs_form.save(function (err, inputs_form){
-//     if(err) return console.error(err);
-//     mongoose.deleteModel('Form_data');  
-//     console.log('save');
-// });
-
-form_list.find(function (err, form_list) {
-    if (err) return handleError(err);
-    // console.log(form_list);
+        try{
+            form_list.find(function (err, form_list) {
+                if (err) return handleError(err);
+                form_list.forEach(element => {
+                    const path_send = element.appId;
+                    const app_name = element._app.caption;
+                    const app_id = element._app.appId;
+                    const array = { path_send, app_name, app_id };
+                    json_files.push(array);
+                });
+                event.sender.send('list_files', json_files);
+            });
+        }
+        catch(error){
+            console.log(error);
+        }
+    }
+    else if(con == false){
+        // offline
+        try{
+            fs.readdir(path.join(__dirname, 'form_data'), (err, dir) => {
+                if (err) return handleError(err);
+                json_files = [];
+                for (var i = 0, path; path = dir[i]; i++) {
+                    var file_type = path.substr(path.length - 5);
+                    if(file_type === '.json'){
+                        const path_send = path;
+                        const config_name = require(file + path);
+                        const app_name = config_name._app.caption;
+                        const app_id = config_name._app.appId;
+                        const array = { path_send, app_name, app_id }
+                        json_files.push(array);
+                    }
+                }
+                event.sender.send('list_files', json_files)
+            });
+        }
+        catch(error){
+            console.log(error);
+        }
+    }
 });
 
-// ======================================= SCHEMA ================================================= //
-var dataSchema = new mongoose.Schema({
-    form_id: String,
-    Customer: String,
-    Transaction: String,
-    data: Array 
-});
-
+// ========================================== DISPLAY FORM ============================================== //
 ipcMain.on('upload-json', (event, arg, app_id) => {
-    // console.log(arg) // prints "ping"
-    // console.log(config);
+    // console.log(arg);
     // console.log(app_id);
-    const config = require(file + arg);
+    // console.log(connection);
+    if(connection){
+        try{
+            var form = mongoose.model('Form_data', formSchema);
+            form.find({'appId' : app_id}, function (err, config){
+                if (err) return handleError(err);
 
-    var data = mongoose.model('Data', dataSchema);
+                var data = mongoose.model('Data', dataSchema);
 
-    data.find({'Transaction': app_id}, function (err, data) {
-        if (err) return handleError(err);
-        // event.sender.send(data);
-        event.sender.send('upload-json', config, data);
-    });
-    // console.log(send_data);
-    // console.log(config);
-    // console.log(config);
-    // console.log(config._app.caption);
-    
+                data.find({'Transaction': app_id}, function (err, data) {
+                    if (err) return handleError(err);
+                    event.sender.send('upload-json', config[0]._doc, data);
+                });
+            });
+        }
+        catch(error){
+            console.log(error);
+        }
+    }
+    else if(connection == false){
+        const config = require(file + arg);
+        if(connection){
+            var data = mongoose.model('Data', dataSchema);
+
+            data.find({'Transaction': app_id}, function (err, data) {
+                if (err) return handleError(err);
+                event.sender.send('upload-json', config, data);
+            });
+        }
+        else{
+            event.sender.send('upload-json', config, data);
+        }
+    }
 });
 
-ipcMain.on('send_data', (event, arg) => {
+// ========================================= SUBMIT FORM ========================================= //
+ipcMain.on('send-data', (event, arg) => {
     // console.log(arg.data);
     function makeid() {
         var text = "";
@@ -154,10 +190,16 @@ ipcMain.on('send_data', (event, arg) => {
         mongoose.deleteModel('Data');  
         console.log('save');
     });
-    // console.log(arg);
-    // event.sender.send('upload-json', config)
 });
 
+// =============== offline ========================== //
+
+// ipcMain.on('upload-json', (event, arg, app_id) => {
+//     // console.log(arg) // prints "ping"
+    
+// });
+
+// ============================================ FUNCTION WINDOWS ======================================== //
 function createNew(){
     // create new window
     addWindow = new BrowserWindow({

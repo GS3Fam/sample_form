@@ -56,3 +56,30 @@
 #inputs{
     margin-bottom: 10px;
 }
+
+#whole-table{
+    width: 100%;
+}
+
+#whole-table th, td {
+    border: 1px solid rgb(212, 212, 212);
+}
+
+#whole-table th {
+    height: 30px;
+    padding-left: 10px;
+    padding-right: 10px; 
+}
+
+#whole-table td {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.table-row:hover{
+    background-color: rgb(212, 212, 212);
+}
+
+.action-btn:hover{
+    cursor: pointer;
+}
