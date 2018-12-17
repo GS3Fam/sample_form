@@ -128,7 +128,7 @@ ipcMain.on('list_files', (event, arg, con) => {
 });
 
 // ========================================== DISPLAY FORM ============================================== //
-ipcMain.on('upload-json', (event, arg, app_id) => {
+ipcMain.on('view-data', (event, arg, app_id) => {
     // console.log(arg);
     // console.log(app_id);
     // console.log(connection);
@@ -138,11 +138,13 @@ ipcMain.on('upload-json', (event, arg, app_id) => {
             form.find({'appId' : app_id}, function (err, config){
                 if (err) return handleError(err);
 
-                var data = mongoose.model('Data', dataSchema);
+                var data = mongoose.model(app_id, dataSchema);
 
-                data.find({'Transaction': app_id}, function (err, data) {
+                data.find({}, function (err, data) {
                     if (err) return handleError(err);
-                    event.sender.send('upload-json', config[0]._doc, data);
+                    event.sender.send('view-data', config[0]._doc, data);
+                    // data = yung mga na save na data
+                    //config[0]._doc = yung mga form_data
                 });
             });
         }
@@ -157,11 +159,11 @@ ipcMain.on('upload-json', (event, arg, app_id) => {
 
             data.find({'Transaction': app_id}, function (err, data) {
                 if (err) return handleError(err);
-                event.sender.send('upload-json', config, data);
+                event.sender.send('view-data', config, data);
             });
         }
         else{
-            event.sender.send('upload-json', config, data);
+            event.sender.send('view-data', config, data);
         }
     }
 });
@@ -232,34 +234,13 @@ ipcMain.on('send-data', (event, arg) => {
 // });
 
 // ============================================ FUNCTION WINDOWS ======================================== //
-function createNew(){
-    // create new window
-    addWindow = new BrowserWindow({
-        width: 300,
-        height: 200,
-        title: 'Select File'
-    });
-    // Load html
-    addWindow.loadURL(url.format({
-        pathname: path.join(__dirname, 'views/select.html'),
-        protocol: 'file',
-        slashes: true
-    }));
-    //Garbage Collection
-    addWindow.on('closed', function(){
-        addWindow = null;
-    });
-}
 
 const mainMenuTemplate = [
     {
         label: 'File',
         submenu:[
             {
-                label: 'Select File',
-                click(){
-                    createNew();
-                }
+                label: 'Select File'
 
             }
         ]
