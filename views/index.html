@@ -14,7 +14,10 @@
     <div class="container-fluid">
         <div class="row">
             <div id="sidebar">
-                <div class="explorer_title">EXPLORER</div>
+                <div class="header_container">
+                    <div class="explorer_title">EXPLORER</div>
+                    <div class="status" style="color: green;">Online</div>
+                </div>
                 <div class="btn-group-vertical" id="buttons">
                 </div>
             </div>
@@ -173,6 +176,15 @@
         setInterval(function(){
             checkInternet();
             // console.log(con);
+            $('.status').empty();
+            if(con == true){
+                $('.status').append('Online');
+                $('.status').css("color", "green");
+            }
+            else{
+                $('.status').append('Offline');
+                $('.status').css("color", "red");
+            }
             ipcRenderer.send('list_files', 'ping2', con);
         }, 3000);
 
@@ -213,11 +225,17 @@
                     //
                     // console.log(element[0]);
                 });
-
                 ipcRenderer.send('send-data', obj);
                 // console.log(column_name);
                 // console.log();
             });
+        });
+
+        ipcRenderer.on('saved-indicator', function(event, indicator){
+            if(indicator){
+                
+            }
+            console.log(final_array);
         });
     </script>
 </body>

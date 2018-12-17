@@ -191,6 +191,14 @@ ipcMain.on('send-data', (event, arg) => {
             mongoose.deleteModel('Data');  
             console.log('save');
         });
+
+        var file_name = makeid();
+        fs.writeFile('data/'+file_name+'.json', JSON.stringify(arg), function (err){
+            if (err) throw err;
+            console.log('saved locally');
+        });
+
+        event.sender.send('saved-indicator', true);
     }
     else{
         // console.log(JSON.stringify(arg));
@@ -200,6 +208,7 @@ ipcMain.on('send-data', (event, arg) => {
 
             console.log('saved locally');
         })
+        event.sender.send('saved-indicator', true);
     }
 });
 
