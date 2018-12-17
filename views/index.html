@@ -23,6 +23,9 @@
             </div>
             <div id="form_content">
                 <h3 id="app_name"></h3>
+                <div id="status_saved" class="alert alert-success" role="alert">
+                   Data saved!
+                </div>
                 <form id = "forms">
                     <!-- <div id = "inputs" style="display: grid; grid-gap: 10px;"> -->
                     <div id = "inputs">
@@ -56,6 +59,7 @@
         var column_name = [];
         var app_id = '';
         $('#buttons').empty();
+        $('#status_saved').empty().removeClass('alert alert-success');
 
         ipcRenderer.on('upload-json', (event, arg, data) => {
             // console.log(data[0]._doc);
@@ -70,7 +74,6 @@
 
 
             // $('#inputs').append(content);
-
             $("#inputs").empty();
             $("#app_name").html('');
             $("#app_name").html(arg._app.caption);
@@ -233,9 +236,12 @@
 
         ipcRenderer.on('saved-indicator', function(event, indicator){
             if(indicator){
-                
+                $('#submit_data').closest('#forms').find("input[type=text], textarea, input[type=date], input[type=time], input[type=number]").val("");
+                $('#submit_data').closest('#forms').find("select").prop('selectedIndex', 0);
+                $('#submit_data').closest('#forms').find("input[type=checkbox]").prop('checked', false);
+                $('html').animate({scrollTop:$('html').offset().top}, 'slow');
+                $('#status_saved').append('Data saved!').addClass('alert alert-success');
             }
-            console.log(final_array);
         });
     </script>
 </body>
