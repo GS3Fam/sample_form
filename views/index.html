@@ -161,6 +161,7 @@
                 var file_name = $(this).attr('value');
                 var app_id_send = $(this).attr('data-id');
                 // console.log(file_name);
+                $('#status_saved').empty().removeClass('alert alert-success');
                 ipcRenderer.send('upload-json', file_name, app_id_send);
             })
             // console.log(item);
@@ -236,6 +237,7 @@
 
         ipcRenderer.on('saved-indicator', function(event, indicator){
             if(indicator){
+                $('#status_saved').empty().removeClass('alert alert-success');
                 $('#submit_data').closest('#forms').find("input[type=text], textarea, input[type=date], input[type=time], input[type=number]").val("");
                 $('#submit_data').closest('#forms').find("select").prop('selectedIndex', 0);
                 $('#submit_data').closest('#forms').find("input[type=checkbox]").prop('checked', false);

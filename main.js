@@ -180,7 +180,7 @@ ipcMain.on('send-data', (event, arg) => {
     }
 
     if(connection){
-        var data = mongoose.model('Data', dataSchema);
+        var data = mongoose.model(arg.Transaction, dataSchema);
 
         var inputs = new data({
             form_id: makeid(), Customer: arg.Customer, Transaction: arg.Transaction, data: arg.data
@@ -188,7 +188,7 @@ ipcMain.on('send-data', (event, arg) => {
 
         inputs.save(function (err, inputs){
             if(err) return console.error(err);
-            mongoose.deleteModel('Data');  
+            mongoose.deleteModel(arg.Transaction);  
             console.log('save');
         });
 
