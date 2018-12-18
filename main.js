@@ -1,7 +1,7 @@
 const electron = require('electron');
 const url = require('url');
 const path = require('path');
-const fs= require('fs');
+const fs = require('fs');
 const file = './form_data/';
 const mongoose = require('mongoose');
 
@@ -190,11 +190,54 @@ ipcMain.on('send-data', (event, arg) => {
         inputs.save(function (err, inputs){
             if(err) return console.error(err);
             console.log('save');
-            arg._id = inputs._id;
-            fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
-                if (err) throw err;
-                console.log('saved locally');
-            })
+            // arg._id = inputs._id;
+            // save 
+            arg.data._id = inputs.id;
+            var obj;
+            var file_path = 'data/'+arg.Transaction+'.json';
+
+            try{
+                if (fs.existsSync(file_path)) {
+                    fs.readFile('data/'+arg.Transaction+'.json', 'utf8', function (err, data) {
+                        if (err) throw err;
+                        obj = JSON.parse(data);
+                        if(Array.isArray(obj.data)){
+                            //true
+                            obj.data.push(arg.data);
+                            fs.writeFile('data/'+arg.Transaction+'.json', JSON.stringify(obj, null, 2), function (err){
+                                if (err) throw err;
+                                console.log('saved locally');
+                            });
+                        }
+                        else{
+                            //is not an array
+                            var making_array = [obj.data];
+                            making_array.push(arg.data);
+                            obj.data = making_array;
+                            fs.writeFile('data/'+arg.Transaction+'.json', JSON.stringify(obj, null, 2), function (err){
+                                if (err) throw err;
+                                console.log('saved locally');
+                            });
+
+                        }
+                        // var array = arg.data;
+                        // console.log(array);
+                        // console.log(array);
+                        // console.log(obj.data)
+                    });
+                }
+                else{
+                    console.log('does not exist');
+                    fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
+                        if (err) throw err;
+                        console.log('saved locally');
+                    });
+                }
+            }
+            catch(err){
+                console.log(error)
+            }
+
             // data.findOneAndUpdate({_id : new_id}, new_id, {upsert:true}, function (err, inputs_find) {
             //     if (err) return handleError(err);
             //     console.log('updated');
