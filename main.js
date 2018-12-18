@@ -39,12 +39,7 @@ app.on('ready', function(){
 });
 
 // ======================================= SCHEMA ================================================= //
-var dataSchema = new mongoose.Schema({
-    form_id: String,
-    Customer: String,
-    Transaction: String,
-    data: Array 
-});
+var dataSchema = new mongoose.Schema({}, {strict: false});
 // ====================================== ERROR HANDLING ============================ //
 function handleError(error){
     console.log(error);
@@ -142,7 +137,11 @@ ipcMain.on('view-data', (event, arg, app_id) => {
 
                 data.find({}, function (err, data) {
                     if (err) return handleError(err);
-                    event.sender.send('view-data', config[0]._doc, data);
+                    var _id = [];
+                    data.forEach(element => {
+                        _id.push(element._id.toString());
+                    });
+                    event.sender.send('view-data', config[0]._doc, data, _id);
                     // data = yung mga na save na data
                     //config[0]._doc = yung mga form_data
                 });
@@ -185,25 +184,44 @@ ipcMain.on('send-data', (event, arg) => {
         var data = mongoose.model(arg.Transaction, dataSchema);
 
         var inputs = new data({
-            form_id: makeid(), Customer: arg.Customer, Transaction: arg.Transaction, data: arg.data
+            Customer: arg.Customer, Transaction: arg.Transaction, data: arg.data
         });
-
+        console.log(makeid());
         inputs.save(function (err, inputs){
             if(err) return console.error(err);
-            mongoose.deleteModel(arg.Transaction);  
             console.log('save');
+            arg._id = inputs._id;
+            fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
+                if (err) throw err;
+                console.log('saved locally');
+            })
+            // data.findOneAndUpdate({_id : new_id}, new_id, {upsert:true}, function (err, inputs_find) {
+            //     if (err) return handleError(err);
+            //     console.log('updated');
+            //     // console.log(inputs);
+
+            //     // inputs_find.id = new_id;
+                
+            //     // inputs_find.save(function (err, inputs) {
+            //     //     if (err) return handleError(err);
+            //     //     console.log('updated')
+            //     // });
+            //     // console.log(inputs);
+            //     // inputs.id = _id;
+            //     // inputs.save(function (err, inputs) {
+            //     //     if (err) return handleError(err);
+            //     //     console.log('updated')
+            //     // });
+            //     // mongoose.deleteModel(arg.Transaction);
+            // });
         });
+
 
         // var file_name = makeid();
         // fs.writeFile('data/'+file_name+'.json', JSON.stringify(arg), function (err){
         //     if (err) throw err;
         //     console.log('saved locally');
         // });
-        fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
-            if (err) throw err;
-
-            console.log('saved locally');
-        })
 
         event.sender.send('saved-indicator', true);
     }
