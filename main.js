@@ -194,17 +194,17 @@ ipcMain.on('send-data', (event, arg) => {
             // save 
             arg.data._id = inputs.id;
             var obj;
-            var file_path = 'data/'+arg.Transaction+'.json';
+            var file_path = __dirname + 'data/'+arg.Transaction+'.json';
 
             try{
                 if (fs.existsSync(file_path)) {
-                    fs.readFile('data/'+arg.Transaction+'.json', 'utf8', function (err, data) {
+                    fs.readFile(file_path, 'utf8', function (err, data) {
                         if (err) throw err;
                         obj = JSON.parse(data);
                         if(Array.isArray(obj.data)){
                             //true
                             obj.data.push(arg.data);
-                            fs.writeFile('data/'+arg.Transaction+'.json', JSON.stringify(obj, null, 2), function (err){
+                            fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
                                 if (err) throw err;
                                 console.log('saved locally');
                             });
@@ -214,7 +214,7 @@ ipcMain.on('send-data', (event, arg) => {
                             var making_array = [obj.data];
                             making_array.push(arg.data);
                             obj.data = making_array;
-                            fs.writeFile('data/'+arg.Transaction+'.json', JSON.stringify(obj, null, 2), function (err){
+                            fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
                                 if (err) throw err;
                                 console.log('saved locally');
                             });
