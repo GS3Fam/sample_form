@@ -1,14 +1,26 @@
 {
   "Customer": "Customer A",
   "Transaction": "5be2419d0fde630013ae04be",
-  "data": {
-    "City": "1",
-    "Country": "1",
-    "Province": "1",
-    "Region": "1",
-    "Service Area Code": "1",
-    "Street Name": "1",
-    "ZIP Code": "1",
-    "_id": "5c18b22c783be22f9c439d07"
-  }
+  "data": [
+    {
+      "City": "1",
+      "Country": "1",
+      "Province": "1",
+      "Region": "1",
+      "Service Area Code": "1",
+      "Street Name": "1",
+      "ZIP Code": "1",
+      "_id": "5c18b22c783be22f9c439d07"
+    },
+    {
+      "City": "1",
+      "Country": "1",
+      "Province": "1",
+      "Region": "1",
+      "Service Area Code": "1",
+      "Street Name": "1",
+      "ZIP Code": "1",
+      "_id": "5c18b98b74e05131204e1951"
+    }
+  ]
 }

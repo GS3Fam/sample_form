@@ -194,7 +194,7 @@ ipcMain.on('send-data', (event, arg) => {
             // save 
             arg.data._id = inputs.id;
             var obj;
-            var file_path = __dirname + 'data/'+arg.Transaction+'.json';
+            var file_path = __dirname + '/data/'+arg.Transaction+'.json';
 
             try{
                 if (fs.existsSync(file_path)) {
