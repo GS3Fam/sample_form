@@ -228,7 +228,7 @@ ipcMain.on('send-data', (event, arg) => {
                 }
                 else{
                     console.log('does not exist');
-                    fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
+                    fs.appendFile(file_path, JSON.stringify(arg, null, 2), function (err){
                         if (err) throw err;
                         console.log('saved locally');
                     });
