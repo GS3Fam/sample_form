@@ -404,6 +404,21 @@ ipcMain.on('view-delete-data', (event, data_id, app_id) => {
             if(err) console.log(err);
             event.sender.send('view-delete-data', data_id, data);
         });
+    }
+    else{
+        console.log('No connection');
+    }
+})
+
+ipcMain.on('delete-data', (event, data_id, app_id) => {
+    if(connection){
+        var data = mongoose.model(app_id, dataSchema);
+        data.findByIdAndRemove(data_id, function (err, data){
+            if(err) console.log(err);
+            console.log('deleted');
+            // event.sender.send('view-delete-data', data_id, data);
+            event.sender.send('delete-indicator', true);
+        });
 
         // ================================== DELETE LOCALLY ====================================//
         var obj;
@@ -414,35 +429,17 @@ ipcMain.on('view-delete-data', (event, data_id, app_id) => {
                 fs.readFile(file_path, 'utf8', function (err, data) {
                     obj = JSON.parse(data);
                     obj.data.forEach(element => {
-                        console.log(element);
+                        if(element._id === data_id){
+                            var index = obj.data.indexOf(element);
+                            obj.data.splice(index, 1)
+                        }
                     });
-                    // console.log(obj.data);
+                    // console.log(obj);
 
-
-                    // if (err) throw err;
-                    // obj = JSON.parse(data);
-                    // if(Array.isArray(obj.data)){
-                    //     //true
-                    //     obj.data.push(arg.data);
-                    //     fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
-                    //         if (err) throw err;
-                    //         console.log('saved locally');
-                    //     });
-                    // }
-                    // else{
-                    //     //is not an array
-                    //     var making_array = [obj.data];
-                    //     making_array.push(arg.data);
-                    //     obj.data = making_array;
-                    //     fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
-                    //         if (err) throw err;
-                    //         console.log('saved locally');
-                    //     });
-                    // }
-                    // // var array = arg.data;
-                    // // console.log(array);
-                    // // console.log(array);
-                    // // console.log(obj.data)
+                    fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                        if (err) throw err;
+                        console.log('deleted locally');
+                    });
                 });
             }
             else{
@@ -462,22 +459,6 @@ ipcMain.on('view-delete-data', (event, data_id, app_id) => {
             console.log(err)
         }
         // ================================ END DELETE LOCALLY ==================================//
-    }
-    else{
-        console.log('No connection');
-    }
-})
-
-ipcMain.on('delete-data', (event, data_id, app_id) => {
-    if(connection){
-        var data = mongoose.model(app_id, dataSchema);
-        data.findByIdAndRemove(data_id, function (err, data){
-            if(err) console.log(err);
-            console.log('deleted');
-            // event.sender.send('view-delete-data', data_id, data);
-            event.sender.send('delete-indicator', true);
-        });
-
 
     }
     else{
