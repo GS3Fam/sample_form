@@ -26,6 +26,9 @@
                 <div id="status_saved" class="alert alert-success" role="alert">
                    Data saved!
                 </div>
+                <div id="question" class="alert alert-success" role="alert">
+                    Data saved!
+                 </div>
                 <form id = "forms">
                     <!-- <div id = "inputs" style="display: grid; grid-gap: 10px;"> -->
                     <div id = "inputs">
@@ -50,26 +53,6 @@
             </div>
         </div>
 
-        <!-- Delete Modal -->
-        <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                      ...
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -86,8 +69,10 @@
         var con;
         $('#buttons').empty();
         $('#status_saved').empty().removeClass('alert alert-success');
+        $('#question').empty().removeClass('alert alert-success alert-danger');
 
         ipcRenderer.on('view-data', (event, arg, data, _id) => {
+            $('#question').empty().removeClass('alert alert-success alert-danger');
             //arg = form data
             //data = data saved
             // console.log(data);
@@ -157,12 +142,111 @@
                 contents = '';
                 // delete data
                 $(".delete-btn").on('click',function() {
-                    console.log($(this).attr('data-id'));
-                    $("#deleteModal").modal("show");
+                    var data_to_be_deleted_id = $(this).attr('data-id');
+                    app_id = arg._app.appId;
+                    ipcRenderer.send('view-delete-data', data_to_be_deleted_id, app_id);
+                });
+
+                // render view delete data
+                ipcRenderer.on('view-delete-data', function(event, data_id, data){
+                    $('#status_saved').empty().removeClass('alert alert-success alert-danger');
+                    $('#question').empty().removeClass('alert alert-success alert-danger');
+
+                    $('#question').append('Are you sure to delete?').addClass('alert alert-danger');
+
+                    var view_data_delete = data._doc.data;
+                    // console.log(data._doc.data);
+                    view_data_delete
+                    $("#inputs").empty();
+                    $("#app_name").html('');
+                    $("#app_name").html('<span class="btn btn-lg btn-light far fa-eye" id="render_table"></span> '+arg._app.caption);
+                    app_id = arg._app.appId;
+                    var container;
+                    final_array = [];
+                    column_name = [];
+                    // console.log(arg);
+                    arg.columns.forEach(element => {
+                        var type;
+                        var input;
+                        column_name = [];
+                        column_name.push(element[0], element[1]);
+                        final_array.push(column_name);
+                        var type2;
+                        if(element[2] == "Editable"){
+                            type = '';
+                        }else if(element[2] == "Computed"){
+                            type = 'disabled';
+                        }
+                        if(element[1] == "Text"){
+                            input = $('<input type="text" class="form-control" value="'+view_data_delete[element[0]]+'" disabled></div>')
+                        }
+                        else if(element[1] == "Time"){
+                            input = $('<input type="time" class="form-control" value="'+view_data_delete[element[0]]+'" disabled></div>')
+                        }
+                        else if(element[1] == "Number"){
+                            input = ('<input type="number" class="form-control" value="'+view_data_delete[element[0]]+'" disabled>')
+                        }
+                        else if(element[1] == "Date"){
+                            input = ('<input type="date" class="form-control" value="'+view_data_delete[element[0]]+'" disabled>')
+                        }
+                        else if(element[1] == "Text Area"){
+                            input = ('<textarea class="form-control" disabled>'+view_data_delete[element[0]]+'</textarea>')
+                        }
+                        else if(element[1].match(/selection-option-.*/)){
+                            input = $('<input type="text" class="form-control" value="'+view_data_delete[element[0]]+'" disabled></div>')
+                        }
+                        else if(element[1].match(/checkbox-option-.*/)){
+                            var ret = element[1].replace('checkbox-option-', '');
+                            var result = ret.split(";");
+
+                            input = '';
+                            result.forEach(value => {
+                                input+= '<div class="form-check"><input type="checkbox" class="'+element[0]+'" name="'+element[0]+'" value="'+value+'" class="form-check-input" /><label class="form-check-label">'+value+'</label></div>'
+                            });
+                        }
+                        else if(element[1].match(/typeahead-option-.*/)){
+                            input = $('<input type="text" class="form-control" value="'+view_data_delete[element[0]]+'" disabled></div>')
+                        }
+
+                        // console.log('grid-column : ' + element[4].column);
+
+                        var label = $('<label></label>').text(element[0]);
+                        var form_group = $('<div class="form-group col"></div>').append(label, input);
+                        if(element[4]=''){
+                            $('#inputs').append(form_group);
+                        }else{
+                            var form_row = $('<div class="form-row"></div>').append(form_group);
+                            var form_grid = $('<div style="grid-column: '+element[4].column+'; grid-row: '+element[4].row+'"></div>').append(form_row);
+                            $('#inputs').append(form_grid);
+                        }
+                    });
+                    $('#inputs').append('<button type="button" class="btn btn-danger" id="delete_data" data-id="'+data_id+'">Delete</button>');
+                    
+                    $("#render_table").on('click',function() {
+                        $('#question').empty().removeClass('alert alert-success alert-danger');
+                        render_table();
+                    });
+
+                    // delete data
+                    $('#delete_data').on('click', function(){
+                        $('#question').empty().removeClass('alert alert-success alert-danger');
+                        var id_delete = $(this).attr('data-id');
+                        app_id = arg._app.appId;
+                        ipcRenderer.send('delete-data', id_delete, app_id);
+                    });
+
+                    // deletion indicator
+                    ipcRenderer.on('delete-indicator', function(event, data_id, data){
+                        $('#status_saved').empty().removeClass('alert alert-success alert-danger');
+                        $('html').animate({scrollTop:$('html').offset().top}, 'slow');
+                        $('#status_saved').append('Data deleted!').addClass('alert alert-danger');
+                        ipcRenderer.send('view-data', file_name, app_id_send);
+                    });
                 });
                 
                 //opening form
                 $("#open_form").on('click',function() {
+                    $('#status_saved').empty().removeClass('alert alert-success');
                     $("#inputs").empty();
                     $("#app_name").html('');
                     $("#app_name").html('<span class="btn btn-lg btn-light far fa-eye" id="render_table"></span> '+arg._app.caption);
@@ -310,8 +394,13 @@
                 }
                 // console.log(final_array);
                 final_array.forEach(element => {
-                    if(element[1].match(/typeahead-option-.*/) || element[1] == "Text" || element[1] == "Time" || element[1] == "Number" || element[1] == "Date" || element[1] == "Text Area"){
+                    if(element[1].match(/typeahead-option-.*/) || element[1] == "Text" || element[1] == "Time" || element[1] == "Number" || element[1] == "Date"){
                         value = $('input[name="'+element[0]+'"]').val();
+                        obj.data[element[0]] = value;
+                    }
+                    else if(element[1] == "Text Area"){
+                        console.lo
+                        value = $('textarea[name="'+element[0]+'"]').val();
                         obj.data[element[0]] = value;
                     }
                     else if(element[1].match(/selection-option-.*/)){
@@ -338,6 +427,7 @@
         ipcRenderer.on('saved-indicator', function(event, indicator){
             if(indicator){
                 $('#status_saved').empty().removeClass('alert alert-success');
+                $('#question').empty().removeClass('alert alert-success alert-danger');
                 // $('#submit_data').closest('#forms').find("input[type=text], textarea, input[type=date], input[type=time], input[type=number]").val("");
                 // $('#submit_data').closest('#forms').find("select").prop('selectedIndex', 0);
                 // $('#submit_data').closest('#forms').find("input[type=checkbox]").prop('checked', false);
@@ -346,6 +436,8 @@
                 ipcRenderer.send('view-data', file_name, app_id_send);
             }
         });
+
+        //to be deleted data
     </script>
 </body>
 </html>

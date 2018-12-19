@@ -146,7 +146,6 @@ ipcMain.on('view-data', (event, arg, app_id) => {
                         _id.push(element._id.toString());
                     });
                     event.sender.send('view-data', config[0]._doc, data, _id);
-                    console.log(data);
                     // data = yung mga na save na data
                     //config[0]._doc = yung mga form_data
                 });
@@ -176,8 +175,7 @@ ipcMain.on('view-data', (event, arg, app_id) => {
                 fs.readFile(data_local_path, (err, local_data) => {
                     if (err) throw err;
                     let read_local_data = JSON.parse(local_data);
-                    console.log(read_local_data); 
-
+                    // console.log(read_local_data); 
 
                     data_local_new = read_local_data;
 
@@ -193,7 +191,6 @@ ipcMain.on('view-data', (event, arg, app_id) => {
 
                     // store the data
                     data_local_new.data.forEach(one_data_2 => {
-                        // delete one_data_2['_id'];
                         var data_local_save = {
                             Customer : 'Customer A',
                             Transaction: read_local_data.Transaction,
@@ -399,6 +396,94 @@ ipcMain.on('send-data', (event, arg) => {
     }
 });
 
+// ============================= DELETE DATA ============================ //
+ipcMain.on('view-delete-data', (event, data_id, app_id) => {
+    if(connection){
+        var data = mongoose.model(app_id, dataSchema);
+        data.findById(data_id, function (err, data){
+            if(err) console.log(err);
+            event.sender.send('view-delete-data', data_id, data);
+        });
+
+        // ================================== DELETE LOCALLY ====================================//
+        var obj;
+        var file_path = __dirname + '/data/'+app_id+'.json';
+
+        try{
+            if (fs.existsSync(file_path)) {
+                fs.readFile(file_path, 'utf8', function (err, data) {
+                    obj = JSON.parse(data);
+                    obj.data.forEach(element => {
+                        console.log(element);
+                    });
+                    // console.log(obj.data);
+
+
+                    // if (err) throw err;
+                    // obj = JSON.parse(data);
+                    // if(Array.isArray(obj.data)){
+                    //     //true
+                    //     obj.data.push(arg.data);
+                    //     fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                    //         if (err) throw err;
+                    //         console.log('saved locally');
+                    //     });
+                    // }
+                    // else{
+                    //     //is not an array
+                    //     var making_array = [obj.data];
+                    //     making_array.push(arg.data);
+                    //     obj.data = making_array;
+                    //     fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                    //         if (err) throw err;
+                    //         console.log('saved locally');
+                    //     });
+                    // }
+                    // // var array = arg.data;
+                    // // console.log(array);
+                    // // console.log(array);
+                    // // console.log(obj.data)
+                });
+            }
+            else{
+                console.log('does not exist');
+
+                var making_array = [arg.data];
+                // making_array.push(arg.data);
+                arg.data = making_array;
+                // console.log(arg)
+                fs.appendFile(file_path, JSON.stringify(arg, null, 2), function (err){
+                    if (err) throw err;
+                    console.log('saved locally');
+                });
+            }
+        }
+        catch(err){
+            console.log(err)
+        }
+        // ================================ END DELETE LOCALLY ==================================//
+    }
+    else{
+        console.log('No connection');
+    }
+})
+
+ipcMain.on('delete-data', (event, data_id, app_id) => {
+    if(connection){
+        var data = mongoose.model(app_id, dataSchema);
+        data.findByIdAndRemove(data_id, function (err, data){
+            if(err) console.log(err);
+            console.log('deleted');
+            // event.sender.send('view-delete-data', data_id, data);
+            event.sender.send('delete-indicator', true);
+        });
+
+
+    }
+    else{
+        console.log('No connection');
+    }
+})
 // =============== offline ========================== //
 
 // ipcMain.on('upload-json', (event, arg, app_id) => {

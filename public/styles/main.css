@@ -97,3 +97,11 @@
     border-bottom-width: 1px;
     width: 232px;
 }
+
+#status_saved{
+    z-index: -1;
+}
+
+#question{
+    z-index: -1;
+}
