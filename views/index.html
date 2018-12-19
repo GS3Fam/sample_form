@@ -79,6 +79,11 @@
         var final_array = [];
         var column_name = [];
         var app_id = '';
+        // name of file
+        var file_name = '';
+        // id of the app
+        var app_id_send = '';
+        var con;
         $('#buttons').empty();
         $('#status_saved').empty().removeClass('alert alert-success');
 
@@ -101,15 +106,42 @@
                 content += '</thead>';
                 content += '<tbody>';
                 var ctr = 0;
+                
+                // console.log(data[0]);
+                // data.forEach(element => {
+                //     console.log(con);
+                //     var column_data = element.data;
+                //     // console.log(column_data);
+
+                //     for (var key in column_data){
+                //         if(column_data.hasOwnProperty(key)){
+                //             content += '<td>' + column_data[key] + '</td>';
+                //             console.log(column_data[key])
+                //         }
+                //     }
+
+                // });
+
                 data.forEach(element => {
-                    var column_data = element._doc.data;
-                    console.log(column_data);
+                    if(con){
+                        var column_data = element._doc.data;
+                    }
+                    else{
+                        var column_data = element.data;
+                    }
+                    // console.log(column_data);
                     content += '<tr>';
                     content += '<td> <span class="action-btn fas fa-edit" data-id="'+_id[ctr]+'"></span> <span class="delete-btn action-btn far fa-trash-alt" data-id="'+_id[ctr]+'"></span></td>';
 
                     for (var key in column_data){
                         if(column_data.hasOwnProperty(key)){
-                            content += '<td>' + column_data[key] + '</td>';
+                            // console.log(key);
+                            if(key == '_id'){
+
+                            }
+                            else{
+                                content += '<td>' + column_data[key] + '</td>';
+                            }
                         }
                     }
                     content += '</tr>';
@@ -122,7 +154,7 @@
                 // delete data
                 $(".delete-btn").on('click',function() {
                     console.log($(this).attr('data-id'));
-                    $("#deleteModal").modal("show")
+                    $("#deleteModal").modal("show");
                 });
                 
                 //opening form
@@ -134,6 +166,7 @@
                     var container;
                     final_array = [];
                     column_name = [];
+                    // console.log(arg);
                     arg.columns.forEach(element => {
                         var type;
                         var input;
@@ -218,13 +251,12 @@
             });
 
             // get list of files for online
-            $(".file_button").one('click',function() {
+            // $(".file_button").one('click',function() {
             // $(".file_button").unbind().click(function() {
-            // $('.file_button').on('click',function() {
+            $('.file_button').on('click',function() {
                 $("#inputs").empty();
-                var file_name = $(this).attr('value');
-                var app_id_send = $(this).attr('data-id');
-                // console.log(file_name);
+                file_name = $(this).attr('value');
+                app_id_send = $(this).attr('data-id');
                 $('#status_saved').empty().removeClass('alert alert-success');
                 ipcRenderer.send('view-data', file_name, app_id_send);
             })
@@ -235,7 +267,7 @@
         //     console.log(item);
         //     // console.log(item);
         // });
-        var con;
+        
         function checkInternet() {
             require('dns').lookup('google.com',function(err) {
                 con = err && err.code == "ENOTFOUND" ? false : true
@@ -254,7 +286,7 @@
                 $('.status').css("color", "red");
             }
             ipcRenderer.send('list_files', 'ping2', con);
-        }, 3000);
+        }, 1000);
 
         
         // ipcRenderer.send('upload-json', 'ping1');
@@ -302,11 +334,12 @@
         ipcRenderer.on('saved-indicator', function(event, indicator){
             if(indicator){
                 $('#status_saved').empty().removeClass('alert alert-success');
-                $('#submit_data').closest('#forms').find("input[type=text], textarea, input[type=date], input[type=time], input[type=number]").val("");
-                $('#submit_data').closest('#forms').find("select").prop('selectedIndex', 0);
-                $('#submit_data').closest('#forms').find("input[type=checkbox]").prop('checked', false);
+                // $('#submit_data').closest('#forms').find("input[type=text], textarea, input[type=date], input[type=time], input[type=number]").val("");
+                // $('#submit_data').closest('#forms').find("select").prop('selectedIndex', 0);
+                // $('#submit_data').closest('#forms').find("input[type=checkbox]").prop('checked', false);
                 $('html').animate({scrollTop:$('html').offset().top}, 'slow');
                 $('#status_saved').append('Data saved!').addClass('alert alert-success');
+                ipcRenderer.send('view-data', file_name, app_id_send);
             }
         });
     </script>

@@ -67,59 +67,63 @@ var form_list = mongoose.model('Form_data', formSchema);
 var json_files = [];
 ipcMain.on('list_files', (event, arg, con) => {
     // check if the connection is the same
-    // if(con == connection){
-    //     console.log('same');
-    // }
-    // else{
-    //     connection = con;
-    // }
-    connection = con;
-    json_files = [];
-    if(con == true){
-        mongoose.connect(db_online);
-        db.on('error', console.error.bind(console, 'connection error:'));
+    if(con == connection){
+        // console.log('same');
+    }
+    else{
+        // console.log('not same');
+        connection = con;
+        json_files = [];
+        if(connection == true){
+            mongoose.connect(db_online);
+            db.on('error', console.error.bind(console, 'connection error:'));
 
-        try{
-            form_list.find(function (err, form_list) {
-                if (err) return handleError(err);
-                form_list.forEach(element => {
-                    const path_send = element.appId;
-                    const app_name = element._app.caption;
-                    const app_id = element._app.appId;
-                    const array = { path_send, app_name, app_id };
-                    json_files.push(array);
-                });
-                event.sender.send('list_files', json_files);
-            });
-        }
-        catch(error){
-            console.log(error);
-        }
-    }
-    else if(con == false){
-        // offline
-        try{
-            fs.readdir(path.join(__dirname, 'form_data'), (err, dir) => {
-                if (err) return handleError(err);
-                json_files = [];
-                for (var i = 0, path; path = dir[i]; i++) {
-                    var file_type = path.substr(path.length - 5);
-                    if(file_type === '.json'){
-                        const path_send = path;
-                        const config_name = require(file + path);
-                        const app_name = config_name._app.caption;
-                        const app_id = config_name._app.appId;
-                        const array = { path_send, app_name, app_id }
+            try{
+                form_list.find(function (err, form_list) {
+                    if (err) return handleError(err);
+                    form_list.forEach(element => {
+                        const path_send = element.appId;
+                        const app_name = element._app.caption;
+                        const app_id = element._app.appId;
+                        const array = { path_send, app_name, app_id };
                         json_files.push(array);
-                    }
-                }
-                event.sender.send('list_files', json_files)
-            });
+                    });
+                    // console.log(json_files)
+                    event.sender.send('list_files', json_files);
+                });
+            }
+            catch(error){
+                console.log(error);
+            }
         }
-        catch(error){
-            console.log(error);
+        else if(connection == false){
+            // offline
+            try{
+                fs.readdir(path.join(__dirname, 'form_data'), (err, dir) => {
+                    if (err) return handleError(err);
+                    json_files = [];
+                    for (var i = 0, path; path = dir[i]; i++) {
+                        var file_type = path.substr(path.length - 5);
+                        if(file_type === '.json'){
+                            const path_send = path;
+                            const config_name = require(file + path);
+                            const app_name = config_name._app.caption;
+                            const app_id = config_name._app.appId;
+                            const array = { path_send, app_name, app_id }
+                            json_files.push(array);
+                        }
+                    }
+                    // console.log(json_files);
+                    event.sender.send('list_files', json_files)
+                });
+            }
+            catch(error){
+                console.log(error);
+            }
         }
     }
+
+    // connection = con;
 });
 
 // ========================================== DISPLAY FORM ============================================== //
@@ -142,6 +146,7 @@ ipcMain.on('view-data', (event, arg, app_id) => {
                         _id.push(element._id.toString());
                     });
                     event.sender.send('view-data', config[0]._doc, data, _id);
+                    console.log(data);
                     // data = yung mga na save na data
                     //config[0]._doc = yung mga form_data
                 });
@@ -162,7 +167,60 @@ ipcMain.on('view-data', (event, arg, app_id) => {
             });
         }
         else{
-            event.sender.send('view-data', config, data);
+            // console.log(config._app.appId);
+            var data_local_path = ''
+            data_local_path = __dirname + '/data/' + config._app.appId + '.json';
+            var data = [];
+
+            if (fs.existsSync(data_local_path)) {
+                fs.readFile(data_local_path, (err, local_data) => {
+                    if (err) throw err;
+                    let read_local_data = JSON.parse(local_data);
+                    console.log(read_local_data); 
+
+
+                    data_local_new = read_local_data;
+
+                    // console.log(data_local_new);
+                    //container for the data of data_local
+                    var _id = [];
+                    data_local_data_new = read_local_data.data;
+
+                    // store the id
+                    data_local_new.data.forEach(one_data_1 => {
+                        _id.push(one_data_1._id);
+                    });
+
+                    // store the data
+                    data_local_new.data.forEach(one_data_2 => {
+                        // delete one_data_2['_id'];
+                        var data_local_save = {
+                            Customer : 'Customer A',
+                            Transaction: read_local_data.Transaction,
+                            data : one_data_2
+                        };
+                        // console.log(data_local_new);
+                        data.push(data_local_save);
+                    });
+
+                    // console.log(data);
+                    // console.log(_id);  
+                    // data_local.data.forEach(element => {
+                    //     data_local_new.data = element;
+                    //     // console.log(data_local_new);
+                    //     data.push(data_local_new);
+                    // });
+                    // console.log(data);
+                    event.sender.send('view-data', config, data, _id);
+                })
+                // container for data_local
+                // var data_local = require(data_local_path);
+            }
+            else{
+                _id = '';
+                event.sender.send('view-data', config, data, _id);
+                console.log('does not exist');
+            }
         }
     }
 });
@@ -218,7 +276,6 @@ ipcMain.on('send-data', (event, arg) => {
                                 if (err) throw err;
                                 console.log('saved locally');
                             });
-
                         }
                         // var array = arg.data;
                         // console.log(array);
@@ -228,6 +285,11 @@ ipcMain.on('send-data', (event, arg) => {
                 }
                 else{
                     console.log('does not exist');
+
+                    var making_array = [arg.data];
+                    // making_array.push(arg.data);
+                    arg.data = making_array;
+                    // console.log(arg)
                     fs.appendFile(file_path, JSON.stringify(arg, null, 2), function (err){
                         if (err) throw err;
                         console.log('saved locally');
@@ -235,7 +297,7 @@ ipcMain.on('send-data', (event, arg) => {
                 }
             }
             catch(err){
-                console.log(error)
+                console.log(err)
             }
 
             // data.findOneAndUpdate({_id : new_id}, new_id, {upsert:true}, function (err, inputs_find) {
@@ -278,11 +340,61 @@ ipcMain.on('send-data', (event, arg) => {
 
         //     console.log('saved locally');
         // })
-        fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
-            if (err) throw err;
+        // fs.appendFile('data/'+arg.Transaction+'.json', JSON.stringify(arg, null, 2), function (err){
+        //     if (err) throw err;
 
-            console.log('saved locally');
-        })
+        //     console.log('saved locally');
+        // })
+        // event.sender.send('saved-indicator', true);
+        arg.data._id = makeid();
+        var obj;
+        var file_path = __dirname + '/data/'+arg.Transaction+'.json';
+
+        try{
+            if (fs.existsSync(file_path)) {
+                fs.readFile(file_path, 'utf8', function (err, data) {
+                    if (err) throw err;
+                    obj = JSON.parse(data);
+                    if(Array.isArray(obj.data)){
+                        //true
+                        obj.data.push(arg.data);
+                        fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                            if (err) throw err;
+                            console.log('saved locally');
+                        });
+                    }
+                    else{
+                        //is not an array
+                        var making_array = [obj.data];
+                        making_array.push(arg.data);
+                        obj.data = making_array;
+                        fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                            if (err) throw err;
+                            console.log('saved locally');
+                        });
+                    }
+                    // var array = arg.data;
+                    // console.log(array);
+                    // console.log(array);
+                    // console.log(obj.data)
+                });
+            }
+            else{
+                console.log('does not exist');
+
+                var making_array = [arg.data];
+                // making_array.push(arg.data);
+                arg.data = making_array;
+                // console.log(arg)
+                fs.appendFile(file_path, JSON.stringify(arg, null, 2), function (err){
+                    if (err) throw err;
+                    console.log('saved locally');
+                });
+            }
+        }
+        catch(err){
+            console.log(err)
+        }
         event.sender.send('saved-indicator', true);
     }
 });
