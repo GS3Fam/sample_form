@@ -91,6 +91,7 @@
             //arg = form data
             //data = data saved
             // console.log(data);
+
             function render_table(){
                 $("#inputs").empty();
                 $("#app_name").html('<span class="btn btn-lg btn-light fas fa-plus" id="open_form"></span> '+arg._app.caption);
@@ -132,18 +133,21 @@
                     // console.log(column_data);
                     content += '<tr>';
                     content += '<td> <span class="action-btn fas fa-edit" data-id="'+_id[ctr]+'"></span> <span class="delete-btn action-btn far fa-trash-alt" data-id="'+_id[ctr]+'"></span></td>';
+                    
+                    arg.columns.forEach(element => {
+                        content += '<td>' + column_data[element[0]] + '</td>';
+                    });
+                    // for (var key in column_data){
+                    //     if(column_data.hasOwnProperty(key)){
+                    //         // console.log(key);
+                    //         if(key == '_id'){
 
-                    for (var key in column_data){
-                        if(column_data.hasOwnProperty(key)){
-                            // console.log(key);
-                            if(key == '_id'){
-
-                            }
-                            else{
-                                content += '<td>' + column_data[key] + '</td>';
-                            }
-                        }
-                    }
+                    //         }
+                    //         else{
+                    //             content += '<td>' + column_data[key] + '</td>';
+                    //         }
+                    //     }
+                    // }
                     content += '</tr>';
                     ctr++;
                 });

@@ -191,6 +191,16 @@
       "Street Name": "7",
       "ZIP Code": "7",
       "_id": "5c19d595014c7715741ae864"
+    },
+    {
+      "City": "city",
+      "Country": "country",
+      "Province": "province",
+      "Region": "region",
+      "Service Area Code": "service",
+      "Street Name": "street",
+      "ZIP Code": "zip",
+      "_id": "5c19dead5d263f08bc19a3f9"
     }
   ]
 }
