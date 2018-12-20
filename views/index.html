@@ -69,10 +69,10 @@
         var con;
         $('#buttons').empty();
         $('#status_saved').empty().removeClass('alert alert-success');
-        $('#question').empty().removeClass('alert alert-success alert-danger');
+        $('#question').empty().removeClass('alert alert-danger');
 
         ipcRenderer.on('view-data', (event, arg, data, _id) => {
-            $('#question').empty().removeClass('alert alert-success alert-danger');
+            $('#question').empty().removeClass('alert alert-danger');
             //arg = form data
             //data = data saved
             // console.log(data);
@@ -154,9 +154,14 @@
 
                     $('#question').append('Are you sure to delete?').addClass('alert alert-danger');
 
-                    var view_data_delete = data._doc.data;
+                    if(con){
+                        var view_data_delete = data._doc.data;
+                    }
+                    else{
+                        var view_data_delete = data.data;
+                    }
                     // console.log(data._doc.data);
-                    view_data_delete
+                    // view_data_delete
                     $("#inputs").empty();
                     $("#app_name").html('');
                     $("#app_name").html('<span class="btn btn-lg btn-light far fa-eye" id="render_table"></span> '+arg._app.caption);
@@ -223,13 +228,13 @@
                     $('#inputs').append('<button type="button" class="btn btn-danger" id="delete_data" data-id="'+data_id+'">Delete</button>');
                     
                     $("#render_table").on('click',function() {
-                        $('#question').empty().removeClass('alert alert-success alert-danger');
+                        $('#question').empty().removeClass('alert alert-danger');
                         render_table();
                     });
 
                     // delete data
                     $('#delete_data').on('click', function(){
-                        $('#question').empty().removeClass('alert alert-success alert-danger');
+                        $('#question').empty().removeClass('alert alert-danger');
                         var id_delete = $(this).attr('data-id');
                         app_id = arg._app.appId;
                         ipcRenderer.send('delete-data', id_delete, app_id);
@@ -237,9 +242,9 @@
 
                     // deletion indicator
                     ipcRenderer.on('delete-indicator', function(event, data_id, data){
-                        $('#status_saved').empty().removeClass('alert alert-success alert-danger');
+                        $('#status_saved').empty().removeClass('alert alert-success');
                         $('html').animate({scrollTop:$('html').offset().top}, 'slow');
-                        $('#status_saved').append('Data deleted!').addClass('alert alert-danger');
+                        $('#status_saved').append('Data deleted!').addClass('alert alert-success');
                         ipcRenderer.send('view-data', file_name, app_id_send);
                     });
                 });
@@ -427,7 +432,7 @@
         ipcRenderer.on('saved-indicator', function(event, indicator){
             if(indicator){
                 $('#status_saved').empty().removeClass('alert alert-success');
-                $('#question').empty().removeClass('alert alert-success alert-danger');
+                $('#question').empty().removeClass('alert alert-danger');
                 // $('#submit_data').closest('#forms').find("input[type=text], textarea, input[type=date], input[type=time], input[type=number]").val("");
                 // $('#submit_data').closest('#forms').find("select").prop('selectedIndex', 0);
                 // $('#submit_data').closest('#forms').find("input[type=checkbox]").prop('checked', false);

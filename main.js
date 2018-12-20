@@ -406,7 +406,41 @@ ipcMain.on('view-delete-data', (event, data_id, app_id) => {
         });
     }
     else{
-        console.log('No connection');
+        // =============================== VIEW DELETE LOCALLY ======================== //
+        console.log(data_id);
+        var obj;
+        var file_path = __dirname + '/data/'+app_id+'.json';
+
+        try{
+            if (fs.existsSync(file_path)) {
+                fs.readFile(file_path, 'utf8', function (err, data) {
+                    obj = JSON.parse(data);
+                    var obj_format = {};
+                    obj.data.forEach(element => {
+                        if(element._id === data_id){
+                            var index = obj.data.indexOf(element);
+                            obj.data.splice(index, 0);
+                            obj_format = {
+                                _id: element._id,
+                                Customer: 'Customer A',
+                                Transaction: app_id,
+                                data: obj.data.splice(index, 1)[0]
+                            }
+                        }
+                    });
+                    delete obj_format.data['_id'];
+                    event.sender.send('view-delete-data', data_id, obj_format);
+                });
+            }
+            else{
+                console.log('does not exist');
+            }
+        }
+        catch(err){
+            console.log(err)
+        }
+        // console.log('No connection');
+
     }
 })
 
@@ -462,7 +496,47 @@ ipcMain.on('delete-data', (event, data_id, app_id) => {
 
     }
     else{
+        // ================================ DELETE OFFLINE =====================================//
         console.log('No connection');
+        var obj;
+        var file_path = __dirname + '/data/'+app_id+'.json';
+
+        try{
+            if (fs.existsSync(file_path)) {
+                fs.readFile(file_path, 'utf8', function (err, data) {
+                    obj = JSON.parse(data);
+                    obj.data.forEach(element => {
+                        if(element._id === data_id){
+                            var index = obj.data.indexOf(element);
+                            obj.data.splice(index, 1)
+                        }
+                    });
+                    // console.log(obj);
+
+                    fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                        if (err) throw err;
+                        console.log('deleted locally');
+                    });
+                });
+                event.sender.send('delete-indicator', true);
+            }
+            else{
+                console.log('does not exist');
+
+                var making_array = [arg.data];
+                // making_array.push(arg.data);
+                arg.data = making_array;
+                // console.log(arg)
+                fs.appendFile(file_path, JSON.stringify(arg, null, 2), function (err){
+                    if (err) throw err;
+                    console.log('saved locally');
+                });
+            }
+        }
+        catch(err){
+            console.log(err)
+        }
+        // ============================== END DELETE OFFLINE ===================================//
     }
 })
 // =============== offline ========================== //
