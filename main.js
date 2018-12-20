@@ -630,9 +630,74 @@ ipcMain.on('delete-data', (event, data_id, app_id) => {
     }
 });
 
+// ========================================= EDIT =========================================//
 ipcMain.on('view-edit-data', (event, data_id, app_id) => {
-    console.log(data_id);
-    console.log(app_id);
+    if(connection){
+        var data = mongoose.model(app_id, dataSchema);
+        data.findById(data_id, function (err, data){
+            if(err) console.log(err);
+            event.sender.send('view-edit-data', data_id, data);
+        });
+    }
+    else{
+        console.log('No connection');
+    }
+});
+
+ipcMain.on('update-data', (event, data_id, app_id, arg) => {
+    arg.data._updated = Date();
+    arg.data._isDeleted = false;
+    if(connection){
+        var data = mongoose.model(app_id, dataSchema);
+        data.update({_id: data_id}, { $set: {'data': arg.data}}, function (err, data){
+            if (err) console.log(err);
+            console.log('updated');
+            event.sender.send('update-indicator', true);
+        });
+
+        // ================================ UPDATE LOCALLY ==================================== //
+        var obj;
+        var file_path = __dirname + '/data/'+app_id+'.json';
+
+        try{
+            if (fs.existsSync(file_path)) {
+                fs.readFile(file_path, 'utf8', function (err, data) {
+                    obj = JSON.parse(data);
+                    obj.data.forEach(element => {
+                        if(element._id === data_id){
+                            var index = obj.data.indexOf(element);
+                            obj.data[index] = arg.data;
+                            obj.data[index]._id = data_id;
+                        }
+                    });
+                    // console.log(obj);
+
+                    fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                        if (err) throw err;
+                        console.log('updated locally');
+                    });
+                });
+            }
+            else{
+                console.log('does not exist');
+
+                var making_array = [arg.data];
+                // making_array.push(arg.data);
+                arg.data = making_array;
+                // console.log(arg)
+                fs.appendFile(file_path, JSON.stringify(arg, null, 2), function (err){
+                    if (err) throw err;
+                    console.log('saved locally');
+                });
+            }
+        }
+        catch(err){
+            console.log(err)
+        }
+    }
+    else{
+        console.log('no connection')
+    }
 });
 // =============== offline ========================== //
 

@@ -152,7 +152,7 @@
                     $('#status_saved').empty().removeClass('alert alert-success alert-danger');
                     $('#question').empty().removeClass('alert alert-success alert-danger');
 
-                    $('#question').append('Are you sure to delete?').addClass('alert alert-danger');
+                    $('#question').append('Are you sure you want to delete this record?').addClass('alert alert-danger');
 
                     if(con){
                         var view_data_delete = data._doc.data;
@@ -247,15 +247,168 @@
                         $('#status_saved').append('Data deleted!').addClass('alert alert-success');
                         ipcRenderer.send('view-data', file_name, app_id_send);
                     });
+                });
 
-                    // =================================== EDIT DATA ============================= //
-                    $(".edit-btn").on('click',function() {
-                        var data_to_be_edited_id = $(this).attr('data-id');
-                        app_id = arg._app.appId;
-                        ipcRenderer.send('view-edit-data', data_to_be_edited_id, app_id);
-                    });
+                // =================================== EDIT DATA ============================= //
+                $(".edit-btn").on('click',function() {
+                    var data_to_be_edited_id = $(this).attr('data-id');
+                    app_id = arg._app.appId;
+                    ipcRenderer.send('view-edit-data', data_to_be_edited_id, app_id);
                 });
                 
+                ipcRenderer.on('view-edit-data', function(event, data_id, data){
+                    $('#status_saved').empty().removeClass('alert alert-success');
+                    $("#inputs").empty();
+                    $("#app_name").html('');
+                    $("#app_name").html('<span class="btn btn-lg btn-light far fa-eye" id="render_table"></span> '+arg._app.caption);
+                    
+                    $('#question').empty().removeClass('alert alert-success alert-danger');
+
+                    $('#question').append('Are you sure you want to edit this record?').addClass('alert alert-danger');
+
+
+                    if(con){
+                        var view_data_edit = data._doc.data;
+                    }
+                    else{
+                        var view_data_edit = data.data;
+                    }
+                    app_id = arg._app.appId;
+                    var container;
+                    final_array = [];
+                    column_name = [];
+                    // console.log(arg);
+                    arg.columns.forEach(element => {
+                        var type;
+                        var input;
+                        column_name = [];
+                        column_name.push(element[0], element[1]);
+                        final_array.push(column_name);
+                        var type2;
+                        if(element[2] == "Editable"){
+                            type = '';
+                        }else if(element[2] == "Computed"){
+                            type = 'disabled';
+                        }
+                        if(element[1] == "Text"){
+                            input = $('<input type="text" class="form-control" name="'+element[0]+'_edit" placeholder="Enter '+element[0]+'" value="'+view_data_edit[element[0]]+'" '+type+'></div>')
+                        }
+                        else if(element[1] == "Time"){
+                            input = $('<input type="time" class="form-control" name="'+element[0]+'_edit" placeholder="Enter '+element[0]+'" value="'+view_data_edit[element[0]]+'" '+type+'></div>')
+                        }
+                        else if(element[1] == "Number"){
+                            input = ('<input type="number" class="form-control" name="'+element[0]+'_edit" placeholder="Enter '+element[0]+'" value="'+view_data_edit[element[0]]+'" '+type+'>')
+                        }
+                        else if(element[1] == "Date"){
+                            input = ('<input type="date" class="form-control" name="'+element[0]+'_edit" placeholder="Enter '+element[0]+'" value="'+view_data_edit[element[0]]+'" '+type+'>')
+                        }
+                        else if(element[1] == "Text Area"){
+                            input = ('<textarea class="form-control" name="'+element[0]+'_edit" rows="3" '+type+'>'+view_data_edit[element[0]]+'</textarea>')
+                        }
+                        else if(element[1].match(/selection-option-.*/)){
+                            var ret = element[1].replace('selection-option-', '');
+                            var result = ret.split(";");
+
+                            input = '<select id="inputState" name="'+element[0]+'_edit" class="form-control"><option selected>Choose...</option>'
+                                result.forEach(value => {
+                                    if(view_data_edit[element[0]] == value){
+                                        input+= '<option value="'+value+'" selected>' + value + '</option>'
+                                    }
+                                    else{
+                                        input+= '<option value="'+value+'">' + value + '</option>'
+                                    }
+                                });
+                                input += '</select>'
+                        }
+                        else if(element[1].match(/checkbox-option-.*/)){
+                            var ret = element[1].replace('checkbox-option-', '');
+                            var result = ret.split(";");
+                            var ctr_edit_check = 0;
+                            input = '';
+                            result.forEach(value => {
+                                // console.log(view_data_edit[element[0]][0])
+                                if(view_data_edit[element[0]][ctr_edit_check] == value){
+                                    input+= '<div class="form-check"><input type="checkbox" class="'+element[0]+'_edit" name="'+element[0]+'" value="'+value+'" class="form-check-input" checked /><label class="form-check-label">'+value+'</label></div>'
+                                }
+                                else{
+                                    input+= '<div class="form-check"><input type="checkbox" class="'+element[0]+'_edit" name="'+element[0]+'" value="'+value+'" class="form-check-input" /><label class="form-check-label">'+value+'</label></div>'
+                                }
+                                ctr_edit_check++;
+                            });
+                        }
+                        else if(element[1].match(/typeahead-option-.*/)){
+                            input = $('<input type="text" class="form-control" name="'+element[0]+'_edit" placeholder="Enter '+element[0]+'" value="'+view_data_edit[element[0]]+'" '+type+'></div>')
+                        }
+
+                        // console.log('grid-column : ' + element[4].column);
+
+                        var label = $('<label></label>').text(element[0]);
+                        var form_group = $('<div class="form-group col"></div>').append(label, input);
+                        if(element[4]=''){
+                            $('#inputs').append(form_group);
+                        }else{
+                            var form_row = $('<div class="form-row"></div>').append(form_group);
+                            var form_grid = $('<div style="grid-column: '+element[4].column+'; grid-row: '+element[4].row+'"></div>').append(form_row);
+                            $('#inputs').append(form_grid);
+                        }
+                    });
+                    $('#inputs').append('<button type="button" class="btn btn-primary" id="submit_update" data-id="'+data_id+'">Update</button>');
+                    
+                    $("#render_table").on('click',function() {
+                        $('#question').empty().removeClass('alert alert-success alert-danger');
+                        render_table();
+                    });
+
+                    $('#submit_update').on('click', function(){
+                        $('#question').empty().removeClass('alert alert-danger');
+                        var id_update = $(this).attr('data-id');
+                        app_id = arg._app.appId;
+
+                        var value = '';
+                        var obj = {
+                            "Customer" : "Customer A",
+                            "Transaction" : app_id,
+                            "data" : {
+
+                            }
+                        }
+                        // console.log(final_array);
+                        final_array.forEach(element => {
+                            if(element[1].match(/typeahead-option-.*/) || element[1] == "Text" || element[1] == "Time" || element[1] == "Number" || element[1] == "Date"){
+                                value = $('input[name="'+element[0]+'_edit"]').val();
+                                obj.data[element[0]] = value;
+                            }
+                            else if(element[1] == "Text Area"){
+                                console.lo
+                                value = $('textarea[name="'+element[0]+'_edit"]').val();
+                                obj.data[element[0]] = value;
+                            }
+                            else if(element[1].match(/selection-option-.*/)){
+                                value = $('select[name="'+element[0]+'_edit"]').val();
+                                obj.data[element[0]] = value;
+                            }
+                            else if(element[1].match(/checkbox-option-.*/)){
+                                var sList = [];
+                                $('input[name="'+element[0]+'_edit"]:checked').each(function() {
+                                    sList.push(this.value);
+                                });
+                                obj.data[element[0]] = sList;
+                            }
+                            //
+                            //
+                        });
+                        ipcRenderer.send('update-data', id_update, app_id, obj);
+                    });
+
+                    // updating indicator
+                    ipcRenderer.on('update-indicator', function(event, data_id, data){
+                        $('#status_saved').empty().removeClass('alert alert-success');
+                        $('html').animate({scrollTop:$('html').offset().top}, 'slow');
+                        $('#status_saved').append('Data updated!').addClass('alert alert-success');
+                        ipcRenderer.send('view-data', file_name, app_id_send);
+                    });
+                });
+
                 //opening form
                 $("#open_form").on('click',function() {
                     $('#status_saved').empty().removeClass('alert alert-success');
