@@ -13,6 +13,9 @@ db.on('error', console.error.bind(console, 'connection error:'));
 
 const{app, BrowserWindow, Menu, ipcMain} = electron;
 
+// know if it is the start of app
+var initial_start = true;
+
 let mainWindow;
 let addWindow;
 
@@ -88,8 +91,34 @@ ipcMain.on('list_files', (event, arg, con) => {
                         const array = { path_send, app_name, app_id };
                         json_files.push(array);
                     });
-                    // console.log(json_files)
                     event.sender.send('list_files', json_files);
+
+                    // ======================== DISPLAY FIRST DATA ON FIRST LOAD ===================== //
+                    if(initial_start){
+                        try{
+                            var form = mongoose.model('Form_data', formSchema);
+                            form.find({'appId' : json_files[0].app_id}, function (err, config){
+                                if (err) return handleError(err);
+                
+                                var data = mongoose.model(json_files[0].app_id, dataSchema);
+                
+                                data.find({'data._isDeleted': false}, function (err, data) {
+                                    if (err) return handleError(err);
+                                    var _id = [];
+                                    data.forEach(element => {
+                                        _id.push(element._id.toString());
+                                    });
+                                    event.sender.send('view-data', config[0]._doc, data, _id);
+                                    // data = yung mga na save na data
+                                    //config[0]._doc = yung mga form_data
+                                });
+                            });
+                        }
+                        catch(error){
+                            console.log(error);
+                        }
+                        initial_start = false;
+                    }
                 });
             }
             catch(error){
@@ -115,6 +144,57 @@ ipcMain.on('list_files', (event, arg, con) => {
                     }
                     // console.log(json_files);
                     event.sender.send('list_files', json_files)
+                    // ============================ DISPLAY ON INITIAL START OFFLINE ====================== //
+                    if(initial_start){
+                        const config = require(file + json_files[0].path_send);
+                        var data_local_path = ''
+                        data_local_path = __dirname + '/data/' + json_files[0].app_id + '.json';
+                        var data = [];
+
+                        if (fs.existsSync(data_local_path)) {
+                            fs.readFile(data_local_path, (err, local_data) => {
+                                if (err) throw err;
+                                let read_local_data = JSON.parse(local_data);
+                                // console.log(read_local_data); 
+
+                                data_local_new = read_local_data;
+
+                                //container for the data of data_local
+                                var _id = [];
+                                data_local_data_new = read_local_data.data;
+
+                                // store the id
+                                data_local_new.data.forEach(one_data_1 => {
+                                    _id.push(one_data_1._id);
+                                });
+
+                                // store the data
+                                data_local_new.data.forEach(one_data_2 => {
+                                    if(one_data_2._isDeleted){
+                                        var data_local_save = {
+                                            Customer : 'Customer A',
+                                            Transaction: read_local_data.Transaction,
+                                            data : one_data_2
+                                        };
+                                        // store the id
+                                        _id.push(one_data_2._id);
+                                        // console.log(data_local_new);
+                                        data.push(data_local_save);
+                                    }
+                                });
+                                event.sender.send('view-data', config, data, _id);
+                            })
+                            // container for data_local
+                            // var data_local = require(data_local_path);
+                        }
+                        else{
+                            _id = '';
+                            event.sender.send('view-data', config, data, _id);
+                            console.log('does not exist');
+                        }
+                        initial_start = false;
+                    }
+                    // ====================== END OF DISPLAY INITIAL START ====================== //
                 });
             }
             catch(error){
@@ -139,7 +219,7 @@ ipcMain.on('view-data', (event, arg, app_id) => {
 
                 var data = mongoose.model(app_id, dataSchema);
 
-                data.find({}, function (err, data) {
+                data.find({'data._isDeleted': false}, function (err, data) {
                     if (err) return handleError(err);
                     var _id = [];
                     data.forEach(element => {
@@ -156,68 +236,72 @@ ipcMain.on('view-data', (event, arg, app_id) => {
         }
     }
     else if(connection == false){
-        const config = require(file + arg);
-        if(connection){
-            var data = mongoose.model('Data', dataSchema);
+        try{
+            const config = require(file + arg);
+            if(connection){
+                var data = mongoose.model('Data', dataSchema);
 
-            data.find({'Transaction': app_id}, function (err, data) {
-                if (err) return handleError(err);
-                event.sender.send('view-data', config, data);
-            });
-        }
-        else{
-            // console.log(config._app.appId);
-            var data_local_path = ''
-            data_local_path = __dirname + '/data/' + config._app.appId + '.json';
-            var data = [];
-
-            if (fs.existsSync(data_local_path)) {
-                fs.readFile(data_local_path, (err, local_data) => {
-                    if (err) throw err;
-                    let read_local_data = JSON.parse(local_data);
-                    // console.log(read_local_data); 
-
-                    data_local_new = read_local_data;
-
-                    // console.log(data_local_new);
-                    //container for the data of data_local
-                    var _id = [];
-                    data_local_data_new = read_local_data.data;
-
-                    // store the id
-                    data_local_new.data.forEach(one_data_1 => {
-                        _id.push(one_data_1._id);
-                    });
-
-                    // store the data
-                    data_local_new.data.forEach(one_data_2 => {
-                        var data_local_save = {
-                            Customer : 'Customer A',
-                            Transaction: read_local_data.Transaction,
-                            data : one_data_2
-                        };
-                        // console.log(data_local_new);
-                        data.push(data_local_save);
-                    });
-
-                    // console.log(data);
-                    // console.log(_id);  
-                    // data_local.data.forEach(element => {
-                    //     data_local_new.data = element;
-                    //     // console.log(data_local_new);
-                    //     data.push(data_local_new);
-                    // });
-                    // console.log(data);
-                    event.sender.send('view-data', config, data, _id);
-                })
-                // container for data_local
-                // var data_local = require(data_local_path);
+                data.find({'Transaction': app_id}, function (err, data) {
+                    if (err) return handleError(err);
+                    event.sender.send('view-data', config, data);
+                });
             }
             else{
-                _id = '';
-                event.sender.send('view-data', config, data, _id);
-                console.log('does not exist');
+                // console.log(config._app.appId);
+                var data_local_path = ''
+                data_local_path = __dirname + '/data/' + config._app.appId + '.json';
+                var data = [];
+
+                if (fs.existsSync(data_local_path)) {
+                    fs.readFile(data_local_path, (err, local_data) => {
+                        if (err) throw err;
+                        let read_local_data = JSON.parse(local_data);
+                        // console.log(read_local_data); 
+
+                        data_local_new = read_local_data;
+
+                        // console.log(data_local_new);
+                        //container for the data of data_local
+                        var _id = [];
+                        data_local_data_new = read_local_data.data;
+
+                        // store the data
+                        data_local_new.data.forEach(one_data_2 => {
+                            if(one_data_2._isDeleted){
+                                var data_local_save = {
+                                    Customer : 'Customer A',
+                                    Transaction: read_local_data.Transaction,
+                                    data : one_data_2
+                                };
+                                // store the id
+                                _id.push(one_data_2._id);
+                                // console.log(data_local_new);
+                                data.push(data_local_save);
+                            }
+                        });
+
+                        // console.log(data);
+                        // console.log(_id);  
+                        // data_local.data.forEach(element => {
+                        //     data_local_new.data = element;
+                        //     // console.log(data_local_new);
+                        //     data.push(data_local_new);
+                        // });
+                        // console.log(data);
+                        event.sender.send('view-data', config, data, _id);
+                    })
+                    // container for data_local
+                    // var data_local = require(data_local_path);
+                }
+                else{
+                    _id = '';
+                    event.sender.send('view-data', config, data, _id);
+                    console.log('does not exist');
+                }
             }
+        }
+        catch(err){
+            console.log(err);
         }
     }
 });
@@ -234,10 +318,10 @@ ipcMain.on('send-data', (event, arg) => {
         }
         return text;
     }
-
+    arg.data._updated = Date();
+    arg.data._isDeleted = false;
     if(connection){
         var data = mongoose.model(arg.Transaction, dataSchema);
-
         var inputs = new data({
             Customer: arg.Customer, Transaction: arg.Transaction, data: arg.data
         });
@@ -407,7 +491,6 @@ ipcMain.on('view-delete-data', (event, data_id, app_id) => {
     }
     else{
         // =============================== VIEW DELETE LOCALLY ======================== //
-        console.log(data_id);
         var obj;
         var file_path = __dirname + '/data/'+app_id+'.json';
 
@@ -447,12 +530,18 @@ ipcMain.on('view-delete-data', (event, data_id, app_id) => {
 ipcMain.on('delete-data', (event, data_id, app_id) => {
     if(connection){
         var data = mongoose.model(app_id, dataSchema);
-        data.findByIdAndRemove(data_id, function (err, data){
-            if(err) console.log(err);
+        data.update({_id: data_id}, { $set: {'data._isDeleted': true}}, function (err, data){
+            if (err) console.log(err);
             console.log('deleted');
-            // event.sender.send('view-delete-data', data_id, data);
             event.sender.send('delete-indicator', true);
         });
+        // hard delete
+        // data.findByIdAndRemove(data_id, function (err, data){
+        //     if(err) console.log(err);
+        //     console.log('deleted');
+        //     // event.sender.send('view-delete-data', data_id, data);
+        //     event.sender.send('delete-indicator', true);
+        // });
 
         // ================================== DELETE LOCALLY ====================================//
         var obj;
@@ -465,7 +554,7 @@ ipcMain.on('delete-data', (event, data_id, app_id) => {
                     obj.data.forEach(element => {
                         if(element._id === data_id){
                             var index = obj.data.indexOf(element);
-                            obj.data.splice(index, 1)
+                            obj.data[index]._isDeleted = true;
                         }
                     });
                     // console.log(obj);
@@ -498,17 +587,18 @@ ipcMain.on('delete-data', (event, data_id, app_id) => {
     else{
         // ================================ DELETE OFFLINE =====================================//
         console.log('No connection');
-        var obj;
-        var file_path = __dirname + '/data/'+app_id+'.json';
-
         try{
+            var obj;
+            var file_path = __dirname + '/data/'+app_id+'.json';
+
             if (fs.existsSync(file_path)) {
                 fs.readFile(file_path, 'utf8', function (err, data) {
                     obj = JSON.parse(data);
                     obj.data.forEach(element => {
                         if(element._id === data_id){
                             var index = obj.data.indexOf(element);
-                            obj.data.splice(index, 1)
+                            // obj.data.splice(index, 1)
+                            obj.data[index]._isDeleted = true;
                         }
                     });
                     // console.log(obj);
@@ -538,7 +628,12 @@ ipcMain.on('delete-data', (event, data_id, app_id) => {
         }
         // ============================== END DELETE OFFLINE ===================================//
     }
-})
+});
+
+ipcMain.on('view-edit-data', (event, data_id, app_id) => {
+    console.log(data_id);
+    console.log(app_id);
+});
 // =============== offline ========================== //
 
 // ipcMain.on('upload-json', (event, arg, app_id) => {

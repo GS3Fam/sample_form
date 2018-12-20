@@ -117,7 +117,7 @@
                     }
                     // console.log(column_data);
                     content += '<tr>';
-                    content += '<td> <span class="action-btn fas fa-edit" data-id="'+_id[ctr]+'"></span> <span class="delete-btn action-btn far fa-trash-alt" data-id="'+_id[ctr]+'"></span></td>';
+                    content += '<td> <span class="edit-btn action-btn fas fa-edit" data-id="'+_id[ctr]+'"></span> <span class="delete-btn action-btn far fa-trash-alt" data-id="'+_id[ctr]+'"></span></td>';
                     
                     arg.columns.forEach(element => {
                         content += '<td>' + column_data[element[0]] + '</td>';
@@ -140,7 +140,7 @@
                 content += '</table>';
                 $('#inputs').append(content);
                 contents = '';
-                // delete data
+                // ================================== Delete Data ============================== //
                 $(".delete-btn").on('click',function() {
                     var data_to_be_deleted_id = $(this).attr('data-id');
                     app_id = arg._app.appId;
@@ -247,6 +247,13 @@
                         $('#status_saved').append('Data deleted!').addClass('alert alert-success');
                         ipcRenderer.send('view-data', file_name, app_id_send);
                     });
+
+                    // =================================== EDIT DATA ============================= //
+                    $(".edit-btn").on('click',function() {
+                        var data_to_be_edited_id = $(this).attr('data-id');
+                        app_id = arg._app.appId;
+                        ipcRenderer.send('view-edit-data', data_to_be_edited_id, app_id);
+                    });
                 });
                 
                 //opening form
@@ -339,7 +346,11 @@
         // get json
         ipcRenderer.on('list_files', function(event, item){
             $('#buttons').empty();
-            item.forEach(element => {
+            item.sort(function(a, b){
+                if(a.app_name < b.app_name){return -1; }
+                if(a.app_name > b.app_name){return 1; }
+                return 0;
+            }).forEach(element => {
                 $("#buttons").append('<span class="file_button" value="'+element.path_send+'" data-id="'+element.app_id+'">'+element.app_name+'</span>');
             });
 
