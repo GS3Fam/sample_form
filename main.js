@@ -206,6 +206,7 @@ ipcMain.on('list_files', (event, arg, con) => {
 ipcMain.on('view-data', (event, arg, app_id) => {
     // console.log(arg);
     // console.log(connection);
+    // console.log('this is app id'+ app_id);
 
     if(connection){
         try{
