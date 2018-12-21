@@ -163,14 +163,9 @@ ipcMain.on('list_files', (event, arg, con) => {
                                 var _id = [];
                                 data_local_data_new = read_local_data.data;
 
-                                // store the id
-                                data_local_new.data.forEach(one_data_1 => {
-                                    _id.push(one_data_1._id);
-                                });
-
                                 // store the data
                                 data_local_new.data.forEach(one_data_2 => {
-                                    if(one_data_2._isDeleted){
+                                    if(one_data_2._isDeleted == false){
                                         var data_local_save = {
                                             Customer : 'Customer A',
                                             Transaction: read_local_data.Transaction,
@@ -182,6 +177,7 @@ ipcMain.on('list_files', (event, arg, con) => {
                                         data.push(data_local_save);
                                     }
                                 });
+
                                 event.sender.send('view-data', config, data, _id);
                             })
                             // container for data_local
@@ -209,12 +205,13 @@ ipcMain.on('list_files', (event, arg, con) => {
 // ========================================== DISPLAY FORM ============================================== //
 ipcMain.on('view-data', (event, arg, app_id) => {
     // console.log(arg);
-    // console.log(app_id);
     // console.log(connection);
+
     if(connection){
         try{
             var form = mongoose.model('Form_data', formSchema);
             form.find({'appId' : app_id}, function (err, config){
+                // console.log(config)
                 if (err) return handleError(err);
 
                 var data = mongoose.model(app_id, dataSchema);
@@ -267,7 +264,7 @@ ipcMain.on('view-data', (event, arg, app_id) => {
 
                         // store the data
                         data_local_new.data.forEach(one_data_2 => {
-                            if(one_data_2._isDeleted){
+                            if(one_data_2._isDeleted == false){
                                 var data_local_save = {
                                     Customer : 'Customer A',
                                     Transaction: read_local_data.Transaction,
@@ -523,7 +520,7 @@ ipcMain.on('view-delete-data', (event, data_id, app_id) => {
             console.log(err)
         }
         // console.log('No connection');
-
+        // ================================== END VIEW DELETE LOCALLY ====================== //
     }
 })
 
@@ -640,7 +637,40 @@ ipcMain.on('view-edit-data', (event, data_id, app_id) => {
         });
     }
     else{
-        console.log('No connection');
+        // =============================== VIEW DELETE LOCALLY ======================== //
+        var obj;
+        var file_path = __dirname + '/data/'+app_id+'.json';
+
+        try{
+            if (fs.existsSync(file_path)) {
+                fs.readFile(file_path, 'utf8', function (err, data) {
+                    obj = JSON.parse(data);
+                    var obj_format = {};
+                    obj.data.forEach(element => {
+                        if(element._id === data_id){
+                            var index = obj.data.indexOf(element);
+                            obj.data.splice(index, 0);
+                            obj_format = {
+                                _id: element._id,
+                                Customer: 'Customer A',
+                                Transaction: app_id,
+                                data: obj.data.splice(index, 1)[0]
+                            }
+                        }
+                    });
+                    delete obj_format.data['_id'];
+                    event.sender.send('view-edit-data', data_id, obj_format);
+                });
+            }
+            else{
+                console.log('does not exist');
+            }
+        }
+        catch(err){
+            console.log(err)
+        }
+        // console.log('No connection');
+        // ================================== END VIEW DELETE LOCALLY ====================== //
     }
 });
 
@@ -694,9 +724,51 @@ ipcMain.on('update-data', (event, data_id, app_id, arg) => {
         catch(err){
             console.log(err)
         }
+        // ============================= END UPDATE LOCALLY ========================= //
     }
     else{
-        console.log('no connection')
+        // ================================ UPDATE LOCALLY ==================================== //
+        var obj;
+        var file_path = __dirname + '/data/'+app_id+'.json';
+
+        try{
+            if (fs.existsSync(file_path)) {
+                fs.readFile(file_path, 'utf8', function (err, data) {
+                    obj = JSON.parse(data);
+                    obj.data.forEach(element => {
+                        if(element._id === data_id){
+                            var index = obj.data.indexOf(element);
+                            obj.data[index] = arg.data;
+                            obj.data[index]._id = data_id;
+                        }
+                    });
+                    // console.log(obj);
+
+                    fs.writeFile(file_path, JSON.stringify(obj, null, 2), function (err){
+                        if (err) throw err;
+                        console.log('updated locally');
+                        event.sender.send('update-indicator', true);
+                    });
+                });
+            }
+            else{
+                console.log('does not exist');
+
+                var making_array = [arg.data];
+                // making_array.push(arg.data);
+                arg.data = making_array;
+                // console.log(arg)
+                fs.appendFile(file_path, JSON.stringify(arg, null, 2), function (err){
+                    if (err) throw err;
+                    console.log('saved locally');
+                });
+            }
+        }
+        catch(err){
+            console.log(err)
+        }
+        // ============================= END UPDATE LOCALLY ========================= //
+        // console.log('no connection')
     }
 });
 // =============== offline ========================== //

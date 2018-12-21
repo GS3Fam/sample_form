@@ -72,6 +72,7 @@
         $('#question').empty().removeClass('alert alert-danger');
 
         ipcRenderer.on('view-data', (event, arg, data, _id) => {
+            console.log(arg);
             $('#question').empty().removeClass('alert alert-danger');
             //arg = form data
             //data = data saved
@@ -277,7 +278,7 @@
                     var container;
                     final_array = [];
                     column_name = [];
-                    // console.log(arg);
+
                     arg.columns.forEach(element => {
                         var type;
                         var input;
@@ -363,7 +364,6 @@
                         $('#question').empty().removeClass('alert alert-danger');
                         var id_update = $(this).attr('data-id');
                         app_id = arg._app.appId;
-
                         var value = '';
                         var obj = {
                             "Customer" : "Customer A",
@@ -405,6 +405,7 @@
                         $('#status_saved').empty().removeClass('alert alert-success');
                         $('html').animate({scrollTop:$('html').offset().top}, 'slow');
                         $('#status_saved').append('Data updated!').addClass('alert alert-success');
+                        console.log('this is app id send : ' +app_id_send);
                         ipcRenderer.send('view-data', file_name, app_id_send);
                     });
                 });
@@ -504,6 +505,9 @@
                 if(a.app_name > b.app_name){return 1; }
                 return 0;
             }).forEach(element => {
+                if(file_name == ''){
+                    file_name = element.path_send;
+                }
                 $("#buttons").append('<span class="file_button" value="'+element.path_send+'" data-id="'+element.app_id+'">'+element.app_name+'</span>');
             });
 
